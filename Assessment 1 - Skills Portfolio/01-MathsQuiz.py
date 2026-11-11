@@ -14,38 +14,73 @@ root.geometry('400x400')
 
 root.resizable(0, 0) # Output Window Size is fixed
 
-## Difficulty Menu ##
+#### Difficulty Menu ####
 
-# Difficulty menu GUI
+### Difficulty menu GUI
 img = ImageTk.PhotoImage(Image.open("MainBG.jpg"))
 imgLabel = Label(root, image=img)
 imgLabel.place(x = 0, y = 0, relwidth = 1, relheight = 1)
 
-# Display difficulty menu
+### Display difficulty menu
+## Title displayed on the page
 title = Label(
     root,
     text="MATHS QUIZ",
-    font=("Times New Roman", 28, "bold"),
+    font=("Courier", 28, "bold"),
     fg = "#490005",
-    bg = "#FFFFFF"
+    bg = "#FFFFFF",
+    width = 11
 )
-title.place(x = 200, y = 60, anchor = "center")
+title.place(x = 200, y = 55, anchor = "center")
 
+## Menu panel that the heading and buttons will be placed in.
 menu = Frame(
     root,
     bg = "#FFFFFF",
-    width=350,
-    height=261.5
+    width=340,
+    height=262
 )
-menu.place(x = 200, y = 240, anchor = "center")
+menu.place(x = 200, y = 235, anchor = "center")
 
+## Heading for the difficulty selection section
 difficulty = Label(
     menu,
-    text = "Select Difficulty",
-    font = ("Times New Roman", 16, "bold"),
+    text = "Difficulty Level",
+    font = ("Courier", 18, "bold"),
     fg = "#490005",
     bg = "#FFFFFF"
 )
-difficulty.place(x = 175, y = 40, anchor = "center")
+difficulty.place(x = 175, y = 55, anchor = "center")
+
+## Difficulty buttons
+easyButton = Button(
+    menu,
+    text = "Easy",
+    font = ("Courier", 12, "bold"),
+    fg = "#490005",
+    bg = "#FFFFFF",
+    width = 10
+)
+easyButton.place(x = 175, y = 105, anchor = "center")
+
+modButton = Button(
+    menu,
+    text = "Moderate",
+    font = ("Courier", 12, "bold"),
+    fg = "#490005",
+    bg = "#FFFFFF",
+    width = 10
+)
+modButton.place(x = 175, y = 150, anchor = "center")
+
+advButton = Button(
+    menu,
+    text = "Advanced",
+    font = ("Courier", 12, "bold"),
+    fg = "#490005",
+    bg = "#FFFFFF",
+    width = 10
+)
+advButton.place(x = 175, y = 195, anchor = "center")
 
 root.mainloop() # This is the closing bracket that always stays at the end of the code.
