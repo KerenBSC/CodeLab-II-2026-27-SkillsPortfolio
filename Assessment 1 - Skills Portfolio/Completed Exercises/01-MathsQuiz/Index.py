@@ -5,9 +5,6 @@ from PIL import ImageTk, Image
 import random
 import os
 
-# Set the working directory to the folder containing this Python file.
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
 # ---- Functions ---- #
 
 # Switch between the different pages of the application.
@@ -270,7 +267,7 @@ root.geometry('400x335')
 root.resizable(0, 0)
 
 # Asign a new .ico file to the window to change it's icon.
-root.iconbitmap('LOGO.ico')
+root.iconbitmap("Assessment 1 - Skills Portfolio/Completed Exercises/01-MathsQuiz/LOGO.ico")
 
 # ---- Difficulty Menu ---- #
 
@@ -279,7 +276,7 @@ main = Frame(root)
 main.place(width = 400, height = 335)
 
 # Load and display the main menu background.
-img = ImageTk.PhotoImage(Image.open("MainBG.jpg"))
+img = ImageTk.PhotoImage(Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/01-MathsQuiz/MainBG.jpg"))
 imgLabel = Label(main, image=img)
 imgLabel.place(x = 0, y = 0, relwidth = 1, relheight = 1)
 
@@ -352,9 +349,9 @@ advButton.place(x = 172.5, y = 170, anchor = "center")
 # ---- Quiz Backgrounds ---- #
 
 # Load the backgrounds for each difficulty level.
-easyimg = ImageTk.PhotoImage(Image.open("easyBG.jpg"))
-modimg = ImageTk.PhotoImage(Image.open("modBG.jpg"))
-advimg = ImageTk.PhotoImage(Image.open("advBG.png"))
+easyimg = ImageTk.PhotoImage(Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/01-MathsQuiz/easyBG.jpg"))
+modimg = ImageTk.PhotoImage(Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/01-MathsQuiz/modBG.jpg"))
+advimg = ImageTk.PhotoImage(Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/01-MathsQuiz/advBG.png"))
 
 # ---- Quiz frame (page) ---- #
 
@@ -506,7 +503,7 @@ results = Frame(root)
 results.place(width = 400, height = 335)
 
 # Load and display the results background.
-resultsimg = ImageTk.PhotoImage(Image.open("resultsBG.png"))
+resultsimg = ImageTk.PhotoImage(Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/01-MathsQuiz/resultsBG.png"))
 
 resultsBG = Label(
     results,
