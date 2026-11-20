@@ -1,12 +1,15 @@
 from tkinter import *
-from tkinter import ttk
 import json
 import os
 from PIL import Image, ImageTk
 
+# Set the base directory.
+base_path = os.path.dirname(os.path.abspath(__file__))
+
 # Set the file paths for the TXT and JSON files.
-txt_path = os.path.join("Assessment 1 - Skills Portfolio", "A1 - Resources", "studentMarks.txt")
-json_path = os.path.join("Assessment 1 - Skills Portfolio", "Completed Exercises", "03-StudentDatabase", "studentMarks.json")
+txt_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "A1 - Resources", "studentMarks.txt")
+json_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "Completed Exercises", "03-StudentManager", "studentMarks.json")
+image_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "Completed Exercises", "03-StudentManager", "LOGO.png")
 
 # Converts the original TXT file into a JSON database.
 def convert_to_json():
@@ -152,7 +155,7 @@ def show_lowest_student():
     return display_student(lowest_student)
 
 main = Tk()
-main.title("Alexa's Joke Corner") # Set the window title.
+main.title("Student Manager") # Set the window title.
 main.geometry("650x500") # Set the window size.
 main.configure(bg = "#FFF1DB") # Set the background colour.
 main.resizable(False, False) # Prevent the user from resizing the window.
@@ -161,7 +164,7 @@ main.resizable(False, False) # Prevent the user from resizing the window.
 header = Frame(
     main,
     bg = "#23314F",
-    width = 750,
+    width = 650,
     height = 130
 )
 header.place(x = 0, y = 0)
@@ -169,7 +172,7 @@ header.place(x = 0, y = 0)
 ## Display the application logo
 
 # Open the image.
-pic1 = Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/03-StudentDatabase/LOGO.png")
+pic1 = Image.open(image_path)
 
 # Resize the image to the required dimensions.
 pic2 = pic1.resize((90, 90))
@@ -187,7 +190,7 @@ imglabel.place(x = 17, y = 17)
 # Display the application title.
 title_label = Label(
     header,
-    text = "STUDENT DATABASE",
+    text = "STUDENT MANAGER",
     bg = "#23314F",
     fg = "#FFFFFF",
     font = ("Times New Roman", 36, "bold", "italic")
@@ -228,5 +231,101 @@ btn_lowest = Button(
     font = ("Times New Roman", 16, "bold")
 )
 btn_lowest.place(x = 335, y = 330, width = 290, height = 140)
+
+## Create the all student records frame.
+all_students_frame = Frame(
+    main,
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
+)
+
+# Display the frame title.
+heading = Label(
+    all_students_frame,
+    text = "ALL STUDENT RECORDS",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
+)
+heading.place(x = 25, y = 20, width = 600, height = 60)
+
+# Create the body area for the student table.
+body_frame = Frame(
+    all_students_frame,
+    bg = "#FFFFFF"
+)
+body_frame.place(x = 25, y = 95, width = 600, height = 290)
+
+# Allow the table columns to expand evenly.
+for column in range(6):
+    body_frame.grid_columnconfigure(column, weight = 1)
+
+# Create the table headings.
+headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
+
+for column, heading_text in enumerate(headings):
+
+    label = Label(
+        body_frame,
+        text = heading_text,
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "white"
+    )
+    label.grid(row = 0, column = column, sticky = "nsew", padx = 5, pady = 5)
+
+students = load_students()
+total_percentage = 0
+
+for row, student in enumerate(students, start = 1):
+
+    # Calculate the student's results.
+    coursework_total, percentage, grade = calculate_results(student)
+    total_percentage += percentage
+
+    # Store the information to display.
+    details = [
+        student["name"],
+        student["studentNumber"],
+        f"{coursework_total} / 60",
+        f"{student['examMark']} / 100",
+        f"{percentage:.2f}%",
+        grade
+    ]
+
+    # Display each piece of information in the table.
+    for column, detail in enumerate(details):
+
+        label = Label(
+            body_frame,
+            text = detail,
+            font = ("Times New Roman", 10),
+            bg = "white"
+        )
+        label.grid(row = row, column = column, sticky = "nsew", padx = 2, pady = 2)
+
+# Calculate the number of students and class average.
+number_of_students = len(students)
+average_percentage = total_percentage / number_of_students
+
+# Display the class summary.
+summary_label = Label(
+    all_students_frame,
+    text = f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%",
+    font = ("Times New Roman", 13, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+summary_label.place(x = 25, y = 405)
+
+# Create the back button.
+back_button = Button(
+    all_students_frame,
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = all_students_frame.place_forget
+)
+back_button.place(x = 250, y = 445, width = 150, height = 35)
 
 main.mainloop()
