@@ -8,8 +8,8 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Set the file paths for the TXT and JSON files.
 txt_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "A1 - Resources", "studentMarks.txt")
-json_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "Completed Exercises", "03-StudentManager", "studentMarks.json")
-image_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "Completed Exercises", "03-StudentManager", "LOGO.png")
+json_path = os.path.join(base_path, "studentMarks.json")
+image_path = os.path.join(base_path, "LOGO.png")
 
 # Converts the original TXT file into a JSON database.
 def convert_to_json():
@@ -154,6 +154,28 @@ def show_lowest_student():
 
     return display_student(lowest_student)
 
+# Searches for and displays an individual student's results.
+def search_student():
+
+    # Use the student number entered by the user.
+    student_number = student_number_entry.get()
+
+    # Check whether the input contains a valid number.
+    if student_number.isdigit():
+
+        # Retrieve the student's results.
+        result = view_individual_student(int(student_number))
+
+        # Display the student's results.
+        result_label.config(text = result)
+
+    else:
+        result_label.config(text = "Please enter a valid student number.")
+
+    # Clear the input field.
+    student_number_entry.delete(0, END)
+
+
 main = Tk()
 main.title("Student Manager") # Set the window title.
 main.geometry("650x500") # Set the window size.
@@ -212,7 +234,8 @@ btn_all.place(x = 25, y = 160, width = 290, height = 140)
 btn_individual = Button(
     main,
     text = "Individual Student Records",
-    font = ("Times New Roman", 16, "bold")
+    font = ("Times New Roman", 16, "bold"),
+    command = lambda: individual_frame.place(x = 0, y = 0)
 )
 btn_individual.place(x = 335, y = 160, width = 290, height = 140)
 
@@ -317,7 +340,7 @@ summary_label = Label(
     bg = "#FFF1DB",
     fg = "#23314F"
 )
-summary_label.place(x = 25, y = 405)
+summary_label.place(x = 25, y = 398)
 
 # Create the back button.
 back_button = Button(
@@ -327,5 +350,73 @@ back_button = Button(
     command = all_students_frame.place_forget
 )
 back_button.place(x = 250, y = 445, width = 150, height = 35)
+
+## Create the individual student records frame.
+individual_frame = Frame(
+    main,
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
+)
+
+# Display the frame title.
+heading = Label(
+    individual_frame,
+    text = "INDIVIDUAL STUDENT RECORDS",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
+)
+heading.place(x = 25, y = 20, width = 600, height = 60)
+
+# Ask the user to enter a student number.
+instruction_label = Label(
+    individual_frame,
+    text = "Enter Student Number: ",
+    font = ("Times New Roman", 14, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+instruction_label.place(x = 120, y = 115)
+
+# Create the student number input field.
+student_number_entry = Entry(
+    individual_frame,
+    font = ("Times New Roman", 14),
+    justify = "center"
+)
+student_number_entry.place(x = 350, y = 115, width = 180, height = 30)
+
+# Create an area to display the student's results.
+result_label = Label(
+    individual_frame,
+    text = "",
+    font = ("Times New Roman", 13),
+    bg = "#FFFFFF",
+    fg = "#23314F",
+    justify = "left",
+    anchor = "w",
+    padx = 15,
+    pady = 15
+)
+result_label.place(x = 100, y = 215, width = 450, height = 180)
+
+# Create the search button.
+search_button = Button(
+    individual_frame,
+    text = "Find Student",
+    font = ("Times New Roman", 12, "bold"),
+    command = search_student
+)
+search_button.place(x = 100, y = 170, width = 150, height = 35)
+
+# Create the back button.
+back_button = Button(
+    individual_frame,
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = individual_frame.place_forget
+)
+back_button.place(x = 250, y = 430, width = 150, height = 35)
 
 main.mainloop()
