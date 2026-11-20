@@ -1,6 +1,8 @@
 from tkinter import *
+from tkinter import ttk
 import json
 import os
+from PIL import Image, ImageTk
 
 # Set the file paths for the TXT and JSON files.
 txt_path = os.path.join("Assessment 1 - Skills Portfolio", "A1 - Resources", "studentMarks.txt")
@@ -116,7 +118,7 @@ def view_individual_student(student_number):
     # Search for the student using their student number.
     for student in students:
         if student["studentNumber"] == student_number:
-            display_student(student)
+            return display_student(student)
 
     # Display a message if no matching student is found.
     return "Student not found."
@@ -151,10 +153,80 @@ def show_lowest_student():
 
 main = Tk()
 main.title("Alexa's Joke Corner") # Set the window title.
-main.geometry("750x550") # Set the window size.
+main.geometry("650x500") # Set the window size.
 main.configure(bg = "#FFF1DB") # Set the background colour.
 main.resizable(False, False) # Prevent the user from resizing the window.
 
+## Create the header frame.
+header = Frame(
+    main,
+    bg = "#23314F",
+    width = 750,
+    height = 130
+)
+header.place(x = 0, y = 0)
 
+## Display the application logo
+
+# Open the image.
+pic1 = Image.open("Assessment 1 - Skills Portfolio/Completed Exercises/03-StudentDatabase/LOGO.png")
+
+# Resize the image to the required dimensions.
+pic2 = pic1.resize((90, 90))
+
+# Convert the image for Tkinter.
+logo = ImageTk.PhotoImage(pic2)
+
+# Load and Display the application logo.
+imglabel = Label(
+    main,
+    image = logo,
+    bg = "#FFF1DB")
+imglabel.place(x = 17, y = 17)
+
+# Display the application title.
+title_label = Label(
+    header,
+    text = "STUDENT DATABASE",
+    bg = "#23314F",
+    fg = "#FFFFFF",
+    font = ("Times New Roman", 36, "bold", "italic")
+    )
+title_label.place(x = 135, y = 35)
+
+## Create the main menu buttons.
+
+# Button to switch to the all student records frame.
+btn_all = Button(
+    main,
+    text = "All Student Records",
+    font = ("Times New Roman", 16, "bold"),
+    command = lambda:all_students_frame.place(x = 0, y = 0)
+)
+btn_all.place(x = 25, y = 160, width = 290, height = 140)
+
+# Button to switch to the individual student records frame.
+btn_individual = Button(
+    main,
+    text = "Individual Student Records",
+    font = ("Times New Roman", 16, "bold")
+)
+btn_individual.place(x = 335, y = 160, width = 290, height = 140)
+
+# Button to switch to the highest overall score frame.
+btn_highest = Button(
+    main,
+    text = "Highest Overall Mark",
+    font = ("Times New Roman", 16, "bold")
+)
+btn_highest.place(x = 25, y = 330, width = 290, height = 140)
+
+# Button to switch to the lowest overall score frame.
+btn_lowest = Button(
+    main,
+    text = "Lowest Overall Mark",
+    font = ("Times New Roman", 16, "bold")
+)
+btn_lowest.place(x = 335, y = 330, width = 290, height = 140)
 
 main.mainloop()
