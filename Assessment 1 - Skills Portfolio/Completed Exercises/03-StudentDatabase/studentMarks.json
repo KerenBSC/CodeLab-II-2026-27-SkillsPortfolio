@@ -1,0 +1,82 @@
+[
+    {
+        "studentNumber": 1345,
+        "name": "John Curry",
+        "coursework1": 8,
+        "coursework2": 15,
+        "coursework3": 7,
+        "examMark": 45
+    },
+    {
+        "studentNumber": 2345,
+        "name": "Sam Sturtivant",
+        "coursework1": 14,
+        "coursework2": 15,
+        "coursework3": 14,
+        "examMark": 77
+    },
+    {
+        "studentNumber": 9876,
+        "name": "Lee Scott",
+        "coursework1": 17,
+        "coursework2": 11,
+        "coursework3": 16,
+        "examMark": 99
+    },
+    {
+        "studentNumber": 3724,
+        "name": "Matt Thompson",
+        "coursework1": 19,
+        "coursework2": 11,
+        "coursework3": 15,
+        "examMark": 81
+    },
+    {
+        "studentNumber": 1212,
+        "name": "Ron Herrema",
+        "coursework1": 14,
+        "coursework2": 17,
+        "coursework3": 18,
+        "examMark": 66
+    },
+    {
+        "studentNumber": 8439,
+        "name": "Jake Hobbs",
+        "coursework1": 10,
+        "coursework2": 11,
+        "coursework3": 10,
+        "examMark": 43
+    },
+    {
+        "studentNumber": 2344,
+        "name": "Jo Hyde",
+        "coursework1": 6,
+        "coursework2": 15,
+        "coursework3": 10,
+        "examMark": 55
+    },
+    {
+        "studentNumber": 9384,
+        "name": "Gareth Southgate",
+        "coursework1": 5,
+        "coursework2": 6,
+        "coursework3": 8,
+        "examMark": 33
+    },
+    {
+        "studentNumber": 8327,
+        "name": "Alan Shearer",
+        "coursework1": 20,
+        "coursework2": 20,
+        "coursework3": 20,
+        "examMark": 100
+    },
+    {
+        "studentNumber": 2983,
+        "name": "Les Ferdinand",
+        "coursework1": 15,
+        "coursework2": 17,
+        "coursework3": 18,
+        "examMark": 92
+    }
+]
