@@ -14,6 +14,9 @@ main.geometry("400x350") # Set the window size
 main.configure(bg = "#FFF1DB") # Set the background colour
 main.resizable(False, False) # Prevent the user from resizing the window. Keep the fixed size.
 
+# Asign a new .ico file to the window to change it's icon.
+main.iconbitmap("Assessment 1 - Skills Portfolio/Completed Exercises/02-JokeAssistant/BooksLOGO.ico")
+
 #### Reading the jokes from the text file
 
 # Open the randomJokes.txt file in read mode.
