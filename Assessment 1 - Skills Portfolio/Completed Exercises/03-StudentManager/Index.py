@@ -167,11 +167,61 @@ def open_records(action):
 
     record_action = action
 
+    # Show sorting controls only for menu item 5.
+    if record_action == "sort":
+        sort_frame.place(x = 25, y = 90, width = 600, height = 45)
+    else:
+        sort_frame.place_forget()
+
     # Refresh the table before displaying the page.
     refresh_student_table()
 
     all_students_frame.place(x = 0, y = 0)
 
+
+# Sorts student records according to the selected category and order.
+def apply_sort():
+
+    students = load_students()
+
+    # Sort records alphabetically by student name.
+    if sort_by_var.get() == "Name":
+        students.sort(key = lambda student: student["name"].lower())
+
+    # Sort records numerically by student number.
+    elif sort_by_var.get() == "Student Number":
+        students.sort(key = lambda student: student["studentNumber"])
+
+    # Sort records by coursework total.
+    elif sort_by_var.get() == "Coursework Total":
+        students.sort(key = lambda student: calculate_results(student)[0])
+
+    # Sort records by exam mark.
+    elif sort_by_var.get() == "Exam Mark":
+        students.sort(key = lambda student: student["examMark"])
+
+    # Sort records by overall percentage.
+    elif sort_by_var.get() == "Overall Percentage":
+        students.sort(key = lambda student: calculate_results(student)[1])
+
+    # Sort records alphabetically by grade.
+    elif sort_by_var.get() == "Grade":
+        students.sort(key = lambda student: calculate_results(student)[2])
+
+    # Reverse the order if descending is selected.
+    if sort_order_var.get() == "Descending":
+        students.reverse()
+
+    # Refresh the table using the sorted records.
+    refresh_student_table(students)
+
+# Resets the sorting options and restores the original record order.
+def reset_sort():
+
+    sort_by_var.set("Name")
+    sort_order_var.set("Ascending")
+
+    refresh_student_table()
 
 main = Tk()
 main.title("Student Manager") # Set the window title.
@@ -342,12 +392,89 @@ heading = Label(
 )
 heading.place(x = 25, y = 20, width = 600, height = 60)
 
+# Create the sorting controls.
+sort_frame = Frame(
+    all_students_frame,
+    bg = "#FFF1DB"
+)
+sort_frame.place(x = 25, y = 95, width = 600, height = 45)
+
+# Store the selected sorting category.
+sort_by_var = StringVar()
+sort_by_var.set("Name")
+
+# Store the selected sorting order.
+sort_order_var = StringVar()
+sort_order_var.set("Ascending")
+
+# Display the category label.
+sort_label = Label(
+    sort_frame,
+    text = "Sort by:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+sort_label.place(x = 0, y = 8)
+
+# Create the category dropdown.
+sort_menu = OptionMenu(
+    sort_frame,
+    sort_by_var,
+    "Name",
+    "Student Number",
+    "Coursework Total",
+    "Exam Mark",
+    "Overall Percentage",
+    "Grade"
+)
+sort_menu.config(font = ("Times New Roman", 10))
+sort_menu.place(x = 65, y = 3, width = 170, height = 35)
+
+# Display the order label.
+order_label = Label(
+    sort_frame,
+    text = "Order:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+order_label.place(x = 250, y = 8)
+
+# Create the order dropdown.
+order_menu = OptionMenu(
+    sort_frame,
+    sort_order_var,
+    "Ascending",
+    "Descending"
+)
+order_menu.config(font = ("Times New Roman", 10))
+order_menu.place(x = 305, y = 3, width = 130, height = 35)
+
+# Create the Apply button.
+apply_button = Button(
+    sort_frame,
+    text = "Apply",
+    font = ("Times New Roman", 10, "bold"),
+    command = apply_sort
+)
+apply_button.place(x = 445, y = 3, width = 75, height = 33)
+
+# Create the Reset button.
+reset_button = Button(
+    sort_frame,
+    text = "Reset",
+    font = ("Times New Roman", 10, "bold"),
+    command = reset_sort
+)
+reset_button.place(x = 530, y = 3, width = 70, height = 33)
+
 # Create the body area for the student table.
 body_frame = Frame(
     all_students_frame,
     bg = "#FFFFFF"
 )
-body_frame.place(x = 25, y = 95, width = 600, height = 290)
+body_frame.place(x = 25, y = 135, width = 600, height = 290)
 
 # Allow the table columns to expand evenly.
 for column in range(6):
@@ -367,7 +494,6 @@ for column, heading_text in enumerate(headings):
     )
     label.grid(row = 0, column = column, sticky = "nsew", padx = 5, pady = 5)
 
-
 # Create the class summary label.
 summary_label = Label(
     all_students_frame,
@@ -376,22 +502,20 @@ summary_label = Label(
     bg = "#FFF1DB",
     fg = "#23314F"
 )
-summary_label.place(x = 25, y = 398)
+summary_label.place(x = 25, y = 95)
 
 # Refreshes the student table with the latest records.
-def refresh_student_table():
+def refresh_student_table(students = None):
 
     # Remove the previous table contents.
     for widget in body_frame.winfo_children():
         widget.destroy()
 
     # Load the latest student records.
-    students = load_students()
+    if students is None:
+        students = load_students()
 
     total_percentage = 0
-
-    # Create the table headings.
-    headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
 
     for column, heading_text in enumerate(headings):
 
@@ -443,7 +567,7 @@ def refresh_student_table():
         summary_label.config(
             text = f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%"
         )
-        summary_label.place(x = 25, y = 398)
+        summary_label.place(x = 25, y = 95)
 
     else:
         summary_label.place_forget()
@@ -708,5 +832,7 @@ back_button = Button(
     command = lowest_frame.place_forget
 )
 back_button.place(x = 250, y = 430, width = 150, height = 35)
+
+
 
 main.mainloop()
