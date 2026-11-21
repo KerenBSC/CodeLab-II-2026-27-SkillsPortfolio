@@ -10,6 +10,7 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 txt_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "A1 - Resources", "studentMarks.txt")
 json_path = os.path.join(base_path, "studentMarks.json")
 image_path = os.path.join(base_path, "LOGO.png")
+rankimage_path = os.path.join(base_path, "HighestRank.png")
 
 # Converts the original TXT file into a JSON database.
 def convert_to_json():
@@ -18,7 +19,7 @@ def convert_to_json():
 
     # Open the original TXT file and read the student records.
     with open(txt_path, "r") as file:
-        number_of_students = int(file.readline())
+        file.readline()
 
         for line in file:
             data = line.strip().split(",")
@@ -138,7 +139,7 @@ def show_highest_student():
         if calculate_results(student)[0] + student["examMark"] > calculate_results(highest_student)[0] + highest_student["examMark"]:
             highest_student = student
 
-    return display_student(highest_student)
+    return highest_student
 
 # Retrieves the student with the lowest overall mark.
 def show_lowest_student():
@@ -226,7 +227,7 @@ btn_all = Button(
     main,
     text = "All Student Records",
     font = ("Times New Roman", 16, "bold"),
-    command = lambda:all_students_frame.place(x = 0, y = 0)
+    command = lambda: all_students_frame.place(x = 0, y = 0)
 )
 btn_all.place(x = 25, y = 160, width = 290, height = 140)
 
@@ -243,7 +244,8 @@ btn_individual.place(x = 335, y = 160, width = 290, height = 140)
 btn_highest = Button(
     main,
     text = "Highest Overall Mark",
-    font = ("Times New Roman", 16, "bold")
+    font = ("Times New Roman", 16, "bold"),
+    command = lambda: highest_frame.place(x = 0, y = 0)
 )
 btn_highest.place(x = 25, y = 330, width = 290, height = 140)
 
@@ -416,6 +418,104 @@ back_button = Button(
     text = "Back to Menu",
     font = ("Times New Roman", 12, "bold"),
     command = individual_frame.place_forget
+)
+back_button.place(x = 250, y = 430, width = 150, height = 35)
+
+## Create the highest overall mark frame.
+highest_frame = Frame(
+    main,
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
+)
+
+# Display the frame title.
+heading = Label(
+    highest_frame,
+    text = "HIGHEST OVERALL MARK",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
+)
+heading.place(x = 25, y = 20, width = 600, height = 60)
+
+
+# Retrieve the highest-scoring student's information.
+highest_student = show_highest_student()
+
+# Calculate the student's results.
+coursework_total, percentage, grade = calculate_results(highest_student)
+
+# Store the information to display.
+details = [
+    ["Name", highest_student["name"]],
+    ["Number", highest_student["studentNumber"]],
+    ["Coursework", f"{coursework_total} / 60"],
+    ["Exam", f"{highest_student['examMark']} / 100"],
+    ["Percentage", f"{percentage:.2f}%"],
+    ["Grade", grade]
+]
+
+# Load the award badge image.
+badge_image = Image.open(rankimage_path)
+badge_image = badge_image.resize((60, 60))
+badge_photo = ImageTk.PhotoImage(badge_image)
+
+# Display the award badge.
+badge_label = Label(
+    highest_frame,
+    image = badge_photo,
+    bg = "#FFF1DB"
+)
+badge_label.image = badge_photo
+badge_label.place(x = 290, y = 360)
+
+# Create the results display area.
+result_frame = Frame(
+    highest_frame,
+    bg = "#FFF1DB"
+)
+result_frame.place(x = 100, y = 100, width = 450, height = 250)
+
+# Set two columns.
+result_frame.grid_columnconfigure(0, weight = 1)
+result_frame.grid_columnconfigure(1, weight = 2)
+
+# Display each piece of student information.
+for row, detail in enumerate(details):
+
+    # Display the information heading.
+    heading_label = Label(
+        result_frame,
+        text = detail[0] + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
+    )
+    heading_label.grid(row = row, column = 0, sticky = "nsew", padx = 10, pady = 5, ipady = 4)
+
+    # Display the corresponding value.
+    value_label = Label(
+        result_frame,
+        text = detail[1],
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
+    )
+    value_label.grid(row = row, column = 1, sticky = "nsew", padx = 5, pady = 5)
+
+
+# Create the back button.
+back_button = Button(
+    highest_frame,
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = highest_frame.place_forget
 )
 back_button.place(x = 250, y = 430, width = 150, height = 35)
 
