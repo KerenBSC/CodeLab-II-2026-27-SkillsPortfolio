@@ -160,6 +160,19 @@ def back_to_individual_menu():
     result_label.config(text = "")
     student_number_entry.delete(0, END)
 
+# Opens the student records page for the selected action.
+def open_records(action):
+
+    global record_action
+
+    record_action = action
+
+    # Refresh the table before displaying the page.
+    refresh_student_table()
+
+    all_students_frame.place(x = 0, y = 0)
+
+
 main = Tk()
 main.title("Student Manager") # Set the window title.
 main.geometry("650x500") # Set the window size.
@@ -204,42 +217,112 @@ title_label = Label(
 title_label.place(x = 135, y = 35)
 
 ## Create the main menu buttons.
+# Store the current action for the student records page.
+record_action = "view"
 
-# Button to switch to the all student records frame.
+# Display the main menu heading.
+main_heading = Label(
+    main,
+    text = "MAIN MENU",
+    font = ("Times New Roman", 16, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+main_heading.place(x = 20, y = 155, width = 280)
+
+# Display the extensions heading.
+extension_heading = Label(
+    main,
+    text = "EXTENSIONS",
+    font = ("Times New Roman", 16, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+extension_heading.place(x = 350, y = 155, width = 280)
+
+# Create the vertical separator.
+separator = Frame(
+    main,
+    bg = "#BDBDBD",
+    width = 2,
+    height = 330
+)
+separator.place(x = 325, y = 150)
+
+# MAIN MENU BUTTONS
+
+# Button 1: View All Student Records.
 btn_all = Button(
     main,
     text = "All Student Records",
-    font = ("Times New Roman", 16, "bold"),
-    command = lambda: all_students_frame.place(x = 0, y = 0)
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("view")
 )
-btn_all.place(x = 25, y = 160, width = 290, height = 140)
+btn_all.place(x = 27, y = 200, width = 265, height = 55)
 
-# Button to switch to the individual student records frame.
+# Button 2: View an individual student record.
 btn_individual = Button(
     main,
     text = "Individual Student Records",
-    font = ("Times New Roman", 16, "bold"),
+    font = ("Times New Roman", 13, "bold"),
     command = lambda: individual_frame.place(x = 0, y = 0)
 )
-btn_individual.place(x = 335, y = 160, width = 290, height = 140)
+btn_individual.place(x = 27, y = 265, width = 265, height = 55)
 
-# Button to switch to the highest overall score frame.
+# Button 3: Show the highest overall mark.
 btn_highest = Button(
     main,
     text = "Highest Overall Mark",
-    font = ("Times New Roman", 16, "bold"),
+    font = ("Times New Roman", 13, "bold"),
     command = lambda: highest_frame.place(x = 0, y = 0)
 )
-btn_highest.place(x = 25, y = 330, width = 290, height = 140)
+btn_highest.place(x = 27, y = 330, width = 265, height = 55)
 
-# Button to switch to the lowest overall score frame.
+# Button 4: Show the lowest overall mark.
 btn_lowest = Button(
     main,
     text = "Lowest Overall Mark",
-    font = ("Times New Roman", 16, "bold"),
+    font = ("Times New Roman", 13, "bold"),
     command = lambda: lowest_frame.place(x = 0, y = 0)
 )
-btn_lowest.place(x = 335, y = 330, width = 290, height = 140)
+btn_lowest.place(x = 27, y = 395, width = 265, height = 55)
+
+# EXTENSION BUTTONS
+
+# Button 5: Sort student records.
+btn_sort = Button(
+    main,
+    text = "Sort Student Records",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("sort")
+)
+btn_sort.place(x = 357, y = 200, width = 265, height = 55)
+
+# Button 6: Add a student record.
+btn_add = Button(
+    main,
+    text = "Add Student Record",
+    font = ("Times New Roman", 13, "bold"),
+)
+btn_add.place(x = 357, y = 265, width = 265, height = 55)
+
+# Button 7: Delete a student record.
+btn_delete = Button(
+    main,
+    text = "Delete Student Record",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("delete")
+)
+btn_delete.place(x = 357, y = 330, width = 265, height = 55)
+
+# Button 8: Update a student record.
+btn_update = Button(
+    main,
+    text = "Update Student Record",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("update")
+)
+btn_update.place(x = 357, y = 395, width = 265, height = 55)
 
 ## Create the all student records frame.
 all_students_frame = Frame(
@@ -284,49 +367,90 @@ for column, heading_text in enumerate(headings):
     )
     label.grid(row = 0, column = column, sticky = "nsew", padx = 5, pady = 5)
 
-students = load_students()
-total_percentage = 0
 
-for row, student in enumerate(students, start = 1):
-
-    # Calculate the student's results.
-    coursework_total, percentage, grade = calculate_results(student)
-    total_percentage += percentage
-
-    # Store the information to display.
-    details = [
-        student["name"],
-        student["studentNumber"],
-        f"{coursework_total} / 60",
-        f"{student['examMark']} / 100",
-        f"{percentage:.2f}%",
-        grade
-    ]
-
-    # Display each piece of information in the table.
-    for column, detail in enumerate(details):
-
-        label = Label(
-            body_frame,
-            text = detail,
-            font = ("Times New Roman", 10),
-            bg = "white"
-        )
-        label.grid(row = row, column = column, sticky = "nsew", padx = 2, pady = 2)
-
-# Calculate the number of students and class average.
-number_of_students = len(students)
-average_percentage = total_percentage / number_of_students
-
-# Display the class summary.
+# Create the class summary label.
 summary_label = Label(
     all_students_frame,
-    text = f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%",
+    text = "",
     font = ("Times New Roman", 13, "bold"),
     bg = "#FFF1DB",
     fg = "#23314F"
 )
 summary_label.place(x = 25, y = 398)
+
+# Refreshes the student table with the latest records.
+def refresh_student_table():
+
+    # Remove the previous table contents.
+    for widget in body_frame.winfo_children():
+        widget.destroy()
+
+    # Load the latest student records.
+    students = load_students()
+
+    total_percentage = 0
+
+    # Create the table headings.
+    headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
+
+    for column, heading_text in enumerate(headings):
+
+        label = Label(
+            body_frame,
+            text = heading_text,
+            font = ("Times New Roman", 11, "bold"),
+            bg = "#23314F",
+            fg = "white"
+        )
+        label.grid(row = 0, column = column, sticky = "nsew", padx = 5, pady = 5)
+
+    # Display each student's information.
+    for row, student in enumerate(students, start = 1):
+
+        coursework_total, percentage, grade = calculate_results(student)
+        total_percentage += percentage
+
+        details = [
+            student["name"],
+            student["studentNumber"],
+            f"{coursework_total} / 60",
+            f"{student['examMark']} / 100",
+            f"{percentage:.2f}%",
+            grade
+        ]
+
+        for column, detail in enumerate(details):
+
+            label = Label(
+                body_frame,
+                text = detail,
+                font = ("Times New Roman", 10),
+                bg = "white"
+            )
+            label.grid(row = row, column = column, sticky = "nsew", padx = 2, pady = 2)
+
+    # Calculate the class average.
+    number_of_students = len(students)
+
+    if number_of_students > 0:
+        average_percentage = total_percentage / number_of_students
+    else:
+        average_percentage = 0
+
+    # Display the class summary only when viewing all records.
+    if record_action == "view":
+
+        summary_label.config(
+            text = f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%"
+        )
+        summary_label.place(x = 25, y = 398)
+
+    else:
+        summary_label.place_forget()
+
+
+# Display the student records when the application starts.
+refresh_student_table()
 
 # Create the back button.
 back_button = Button(
