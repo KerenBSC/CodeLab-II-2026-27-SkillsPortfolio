@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 import json
 import os
 from PIL import Image, ImageTk
@@ -50,6 +51,106 @@ def load_students():
         students = json.load(file)
 
     return students
+
+# Save the updated student records to both files.
+def save_students(students):
+
+    # Update the TXT file.
+    with open(txt_path, "w") as file:
+        file.write(str(len(students)) + "\n")
+
+        for student in students:
+            file.write(
+                f"{student['studentNumber']},{student['name']},"
+                f"{student['coursework1']},{student['coursework2']},"
+                f"{student['coursework3']},{student['examMark']}\n"
+            )
+
+    # Update the JSON file.
+    with open(json_path, "w") as file:
+        json.dump(students, file, indent = 4)
+
+# Validate the information entered for a new student.
+def validate_student(name, number, cw1, cw2, cw3, exam):
+
+    # Check that the name is not empty.
+    if name == "":
+        messagebox.showerror("Invalid Input", "Please enter a student name.")
+        return False
+
+    # Check that the student number contains only digits.
+    if not number.isdigit() or not 1000 <= int(number) <= 9999:
+        messagebox.showerror("Invalid Input", "Student number must be between 1000 and 9999.")
+        return False
+
+    # Check that all marks contain valid numbers.
+    try:
+        cw1 = int(cw1)
+        cw2 = int(cw2)
+        cw3 = int(cw3)
+        exam = int(exam)
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter valid whole-number marks.")
+        return False
+
+    # Check that coursework marks are between 0 and 20.
+    if not all(0 <= mark <= 20 for mark in [cw1, cw2, cw3]):
+        messagebox.showerror("Invalid Input", "Coursework marks must be between 0 and 20.")
+        return False
+
+    # Check that the exam mark is between 0 and 100.
+    if not 0 <= exam <= 100:
+        messagebox.showerror("Invalid Input", "Exam mark must be between 0 and 100.")
+        return False
+
+    return True
+
+# Add a new student record.
+def add_student():
+
+    # Get the information entered into the form.
+    name = name_entry.get().strip()
+    number = number_entry.get().strip()
+    cw1 = cw1_entry.get().strip()
+    cw2 = cw2_entry.get().strip()
+    cw3 = cw3_entry.get().strip()
+    exam = exam_entry.get().strip()
+
+    # Validate the entered information.
+    if not validate_student(name, number, cw1, cw2, cw3, exam):
+        return
+
+    # Load the existing student records.
+    students = load_students()
+
+    # Check whether the student number already exists.
+    for student in students:
+        if student["studentNumber"] == int(number):
+            messagebox.showerror("Duplicate Student", "This student number already exists.")
+            return
+
+    # Create the new student record.
+    new_student = {
+        "studentNumber": int(number),
+        "name": name,
+        "coursework1": int(cw1),
+        "coursework2": int(cw2),
+        "coursework3": int(cw3),
+        "examMark": int(exam)
+    }
+
+    # Add the new record to the student list.
+    students.append(new_student)
+
+    # Save the updated records to both files.
+    save_students(students)
+
+    # Display a success message.
+    messagebox.showinfo("Success", "Student record added successfully.")
+
+    # Clear all input fields.
+    for entry in entries:
+        entry.delete(0, END)
 
 # Calculates each student's coursework total, percentage and grade.
 def calculate_results(student):
@@ -131,6 +232,57 @@ def show_lowest_student():
             lowest_student = student
 
     return lowest_student
+
+# Refresh the highest overall mark page.
+def refresh_highest():
+
+    highest_student = show_highest_student()
+
+    coursework_total, percentage, grade = calculate_results(highest_student)
+
+    details = [
+        highest_student["name"],
+        highest_student["studentNumber"],
+        f"{coursework_total} / 60",
+        f"{highest_student['examMark']} / 100",
+        f"{percentage:.2f}%",
+        grade
+    ]
+
+    for row, detail in enumerate(details):
+        highest_value_labels[row].config(text = detail)
+
+# Refresh the lowest overall mark page.
+def refresh_lowest():
+
+    lowest_student = show_lowest_student()
+
+    coursework_total, percentage, grade = calculate_results(lowest_student)
+
+    details = [
+        lowest_student["name"],
+        lowest_student["studentNumber"],
+        f"{coursework_total} / 60",
+        f"{lowest_student['examMark']} / 100",
+        f"{percentage:.2f}%",
+        grade
+    ]
+
+    for row, detail in enumerate(details):
+        lowest_value_labels[row].config(text = detail)
+
+# Opens the highest overall mark page.
+def open_highest():
+
+    refresh_highest()
+    highest_frame.place(x = 0, y = 0)
+
+
+# Opens the lowest overall mark page.
+def open_lowest():
+
+    refresh_lowest()
+    lowest_frame.place(x = 0, y = 0)
 
 # Searches for and displays an individual student's results.
 def search_student():
@@ -324,8 +476,7 @@ btn_highest = Button(
     main,
     text = "Highest Overall Mark",
     font = ("Times New Roman", 13, "bold"),
-    command = lambda: highest_frame.place(x = 0, y = 0)
-)
+    command = open_highest)
 btn_highest.place(x = 27, y = 330, width = 265, height = 55)
 
 # Button 4: Show the lowest overall mark.
@@ -333,8 +484,7 @@ btn_lowest = Button(
     main,
     text = "Lowest Overall Mark",
     font = ("Times New Roman", 13, "bold"),
-    command = lambda: lowest_frame.place(x = 0, y = 0)
-)
+    command = open_lowest)
 btn_lowest.place(x = 27, y = 395, width = 265, height = 55)
 
 # EXTENSION BUTTONS
@@ -353,6 +503,7 @@ btn_add = Button(
     main,
     text = "Add Student Record",
     font = ("Times New Roman", 13, "bold"),
+    command = lambda: add_frame.place(x = 0, y = 0)
 )
 btn_add.place(x = 357, y = 265, width = 265, height = 55)
 
@@ -480,19 +631,8 @@ body_frame.place(x = 25, y = 135, width = 600, height = 290)
 for column in range(6):
     body_frame.grid_columnconfigure(column, weight = 1)
 
-# Create the table headings.
+# Store the student table headings.
 headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
-
-for column, heading_text in enumerate(headings):
-
-    label = Label(
-        body_frame,
-        text = heading_text,
-        font = ("Times New Roman", 11, "bold"),
-        bg = "#23314F",
-        fg = "white"
-    )
-    label.grid(row = 0, column = column, sticky = "nsew", padx = 5, pady = 5)
 
 # Create the class summary label.
 summary_label = Label(
@@ -516,17 +656,6 @@ def refresh_student_table(students = None):
         students = load_students()
 
     total_percentage = 0
-
-    for column, heading_text in enumerate(headings):
-
-        label = Label(
-            body_frame,
-            text = heading_text,
-            font = ("Times New Roman", 11, "bold"),
-            bg = "#23314F",
-            fg = "white"
-        )
-        label.grid(row = 0, column = column, sticky = "nsew", padx = 5, pady = 5)
 
     # Display each student's information.
     for row, student in enumerate(students, start = 1):
@@ -703,22 +832,24 @@ badge_label.image = badge_photo
 badge_label.place(x = 290, y = 360)
 
 # Create the results display area.
-result_frame = Frame(
+result_frame_highest = Frame(
     highest_frame,
     bg = "#FFF1DB"
 )
-result_frame.place(x = 100, y = 100, width = 450, height = 250)
+result_frame_highest.place(x = 100, y = 100, width = 450, height = 250)
 
 # Set two columns.
-result_frame.grid_columnconfigure(0, weight = 1)
-result_frame.grid_columnconfigure(1, weight = 2)
+result_frame_highest.grid_columnconfigure(0, weight = 1)
+result_frame_highest.grid_columnconfigure(1, weight = 2)
+
+highest_value_labels = []
 
 # Display each piece of student information.
 for row, detail in enumerate(details):
 
     # Display the information heading.
     heading_label = Label(
-        result_frame,
+        result_frame_highest,
         text = detail[0] + ":",
         font = ("Times New Roman", 11, "bold"),
         bg = "#23314F",
@@ -731,7 +862,7 @@ for row, detail in enumerate(details):
 
     # Display the corresponding value.
     value_label = Label(
-        result_frame,
+        result_frame_highest,
         text = detail[1],
         font = ("Times New Roman", 11),
         bg = "#FFFFFF",
@@ -741,6 +872,7 @@ for row, detail in enumerate(details):
     )
     value_label.grid(row = row, column = 1, sticky = "nsew", padx = 5, pady = 5)
 
+    highest_value_labels.append(value_label)
 
 # Create the back button.
 back_button = Button(
@@ -786,22 +918,24 @@ details = [
 ]
 
 # Create the results display area.
-result_frame = Frame(
+result_frame_lowest = Frame(
     lowest_frame,
     bg = "#FFF1DB"
 )
-result_frame.place(x = 100, y = 130, width = 450, height = 250)
+result_frame_lowest.place(x = 100, y = 130, width = 450, height = 250)
 
 # Set two columns.
-result_frame.grid_columnconfigure(0, weight = 1)
-result_frame.grid_columnconfigure(1, weight = 2)
+result_frame_lowest.grid_columnconfigure(0, weight = 1)
+result_frame_lowest.grid_columnconfigure(1, weight = 2)
+
+lowest_value_labels = []
 
 # Display each piece of student information.
 for row, detail in enumerate(details):
 
     # Display the information heading.
     heading_label = Label(
-        result_frame,
+        result_frame_lowest,
         text = detail[0] + ":",
         font = ("Times New Roman", 11, "bold"),
         bg = "#23314F",
@@ -814,7 +948,7 @@ for row, detail in enumerate(details):
 
     # Display the corresponding value.
     value_label = Label(
-        result_frame,
+        result_frame_lowest,
         text = detail[1],
         font = ("Times New Roman", 11),
         bg = "#FFFFFF",
@@ -823,6 +957,9 @@ for row, detail in enumerate(details):
         bd = 1
     )
     value_label.grid(row = row, column = 1, sticky = "nsew", padx = 5, pady = 5)
+
+    lowest_value_labels.append(value_label)
+
 
 # Create the back button.
 back_button = Button(
@@ -833,6 +970,88 @@ back_button = Button(
 )
 back_button.place(x = 250, y = 430, width = 150, height = 35)
 
+## Create the add student record frame.
+add_frame = Frame(
+    main,
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
+)
 
+# Display the frame title.
+heading = Label(
+    add_frame,
+    text = "ADD STUDENT RECORD",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
+)
+heading.place(x = 25, y = 20, width = 600, height = 60)
+
+# Create the form display area.
+form_frame = Frame(
+    add_frame,
+    bg = "#FFF1DB"
+)
+form_frame.place(x = 100, y = 120, width = 450, height = 280)
+
+# Set two columns.
+form_frame.grid_columnconfigure(0, weight = 1)
+form_frame.grid_columnconfigure(1, weight = 2)
+
+# Store the student information fields.
+fields = ["Name", "Number", "Coursework 1", "Coursework 2", "Coursework 3", "Exam Mark"]
+
+# Create the entry variables.
+name_entry = Entry(form_frame)
+number_entry = Entry(form_frame)
+cw1_entry = Entry(form_frame)
+cw2_entry = Entry(form_frame)
+cw3_entry = Entry(form_frame)
+exam_entry = Entry(form_frame)
+
+entries = [name_entry, number_entry, cw1_entry, cw2_entry, cw3_entry, exam_entry]
+
+# Create each label and input field.
+for row, field in enumerate(fields):
+
+    field_label = Label(
+        form_frame,
+        text = field + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
+    )
+    field_label.grid(row = row, column = 0, sticky = "nsew", padx = 10, pady = 5, ipady = 4)
+
+    entries[row].config(
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
+    )
+    entries[row].grid(row = row, column = 1, sticky = "nsew", padx = 5, pady = 5)
+
+# Create the Add Student button.
+add_button = Button(
+    add_frame,
+    text = "Add Student",
+    font = ("Times New Roman", 12, "bold"),
+    command = add_student
+)
+add_button.place(x = 165, y = 430, width = 150, height = 35)
+
+# Create the back button.
+back_button = Button(
+    add_frame,
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = add_frame.place_forget
+)
+back_button.place(x = 335, y = 430, width = 150, height = 35)
 
 main.mainloop()
