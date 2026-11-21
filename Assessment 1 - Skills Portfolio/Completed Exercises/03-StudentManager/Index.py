@@ -91,29 +91,6 @@ def display_student(student):
 
     return result
 
-# Retrieves all student records and the class summary.
-def view_all_students():
-
-    students = load_students()
-
-    total_percentage = 0
-    result = ""
-
-    # Retrieve and combine each student's results.
-    for student in students:
-        result += display_student(student)
-        coursework_total, percentage, grade = calculate_results(student)
-        total_percentage += percentage
-
-    # Calculate the class average percentage.
-    average_percentage = total_percentage / len(students)
-
-    result += "\nCLASS SUMMARY\n"
-    result += f"Number of students: {len(students)}\n"
-    result += f"Average percentage: {round(average_percentage, 2)}%\n"
-
-    return result
-
 # Retrieves an individual student's record using their student number.
 def view_individual_student(student_number):
 
@@ -153,7 +130,7 @@ def show_lowest_student():
         if calculate_results(student)[0] + student["examMark"] < calculate_results(lowest_student)[0] + lowest_student["examMark"]:
             lowest_student = student
 
-    return display_student(lowest_student)
+    return lowest_student
 
 # Searches for and displays an individual student's results.
 def search_student():
@@ -176,6 +153,12 @@ def search_student():
     # Clear the input field.
     student_number_entry.delete(0, END)
 
+# Returns to the main menu and clears the previous search.
+def back_to_individual_menu():
+
+    individual_frame.place_forget()
+    result_label.config(text = "")
+    student_number_entry.delete(0, END)
 
 main = Tk()
 main.title("Student Manager") # Set the window title.
@@ -253,7 +236,8 @@ btn_highest.place(x = 25, y = 330, width = 290, height = 140)
 btn_lowest = Button(
     main,
     text = "Lowest Overall Mark",
-    font = ("Times New Roman", 16, "bold")
+    font = ("Times New Roman", 16, "bold"),
+    command = lambda: lowest_frame.place(x = 0, y = 0)
 )
 btn_lowest.place(x = 335, y = 330, width = 290, height = 140)
 
@@ -417,7 +401,7 @@ back_button = Button(
     individual_frame,
     text = "Back to Menu",
     font = ("Times New Roman", 12, "bold"),
-    command = individual_frame.place_forget
+    command = back_to_individual_menu
 )
 back_button.place(x = 250, y = 430, width = 150, height = 35)
 
@@ -516,6 +500,88 @@ back_button = Button(
     text = "Back to Menu",
     font = ("Times New Roman", 12, "bold"),
     command = highest_frame.place_forget
+)
+back_button.place(x = 250, y = 430, width = 150, height = 35)
+
+## Create the lowest overall mark frame.
+lowest_frame = Frame(
+    main,
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
+)
+
+# Display the frame title.
+heading = Label(
+    lowest_frame,
+    text = "LOWEST OVERALL MARK",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
+)
+heading.place(x = 25, y = 20, width = 600, height = 60)
+
+# Retrieve the lowest-scoring student's information.
+lowest_student = show_lowest_student()
+
+# Calculate the student's results.
+coursework_total, percentage, grade = calculate_results(lowest_student)
+
+# Store the information to display.
+details = [
+    ["Name", lowest_student["name"]],
+    ["Number", lowest_student["studentNumber"]],
+    ["Coursework", f"{coursework_total} / 60"],
+    ["Exam", f"{lowest_student['examMark']} / 100"],
+    ["Percentage", f"{percentage:.2f}%"],
+    ["Grade", grade]
+]
+
+# Create the results display area.
+result_frame = Frame(
+    lowest_frame,
+    bg = "#FFF1DB"
+)
+result_frame.place(x = 100, y = 130, width = 450, height = 250)
+
+# Set two columns.
+result_frame.grid_columnconfigure(0, weight = 1)
+result_frame.grid_columnconfigure(1, weight = 2)
+
+# Display each piece of student information.
+for row, detail in enumerate(details):
+
+    # Display the information heading.
+    heading_label = Label(
+        result_frame,
+        text = detail[0] + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
+    )
+    heading_label.grid(row = row, column = 0, sticky = "nsew", padx = 10, pady = 5, ipady = 4)
+
+    # Display the corresponding value.
+    value_label = Label(
+        result_frame,
+        text = detail[1],
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
+    )
+    value_label.grid(row = row, column = 1, sticky = "nsew", padx = 5, pady = 5)
+
+# Create the back button.
+back_button = Button(
+    lowest_frame,
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = lowest_frame.place_forget
 )
 back_button.place(x = 250, y = 430, width = 150, height = 35)
 
