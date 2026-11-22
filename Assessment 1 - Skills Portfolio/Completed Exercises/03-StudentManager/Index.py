@@ -46,7 +46,8 @@ def convert_to_json():
 
     # Save the student records in JSON format.
     with open(json_path, "w") as file:
-        json.dump(students, file, indent=4)
+        json.dump(students, file, indent = 4)
+
 
 # Convert the TXT file into JSON (run only once).
 # convert_to_json()
@@ -58,7 +59,6 @@ def load_students():
         students = json.load(file)
 
     return students
-
 
 # Save updated student records to both files.
 def save_students(students):
@@ -76,7 +76,7 @@ def save_students(students):
 
     # Update the JSON database.
     with open(json_path, "w") as file:
-        json.dump(students, file, indent=4)
+        json.dump(students, file, indent = 4)
 
 
 # ---- ADD STUDENT RECORD ---- #
@@ -116,7 +116,6 @@ def validate_student(name, number, cw1, cw2, cw3, exam):
         return False
 
     return True
-
 
 # Add a new student record to the database.
 def add_student():
@@ -195,7 +194,6 @@ def calculate_results(student):
 
     return coursework_total, percentage, grade
 
-
 # Format an individual student's results for display.
 def display_student(student):
 
@@ -213,7 +211,6 @@ def display_student(student):
 
     return result
 
-
 # Retrieve an individual student's results using their number.
 def view_individual_student(student_number):
 
@@ -225,7 +222,6 @@ def view_individual_student(student_number):
             return display_student(student)
 
     return "Student not found."
-
 
 # Retrieve the student with the highest overall mark.
 def show_highest_student():
@@ -244,7 +240,6 @@ def show_highest_student():
 
     return highest_student
 
-
 # Retrieve the student with the lowest overall mark.
 def show_lowest_student():
 
@@ -262,10 +257,11 @@ def show_lowest_student():
 
     return lowest_student
 
+
 # ---- STUDENT RECORDS AND SORTING ---- #
 
 # Refresh the student records table.
-def refresh_student_table(students=None):
+def refresh_student_table(students = None):
 
     # Remove the previous table contents.
     for widget in body_frame.winfo_children():
@@ -280,24 +276,24 @@ def refresh_student_table(students=None):
 
         heading_label = Label(
             body_frame,
-            text=heading_text,
-            font=("Times New Roman", 10, "bold"),
-            bg="#23314F",
-            fg="#FFFFFF"
+            text = heading_text,
+            font = ("Times New Roman", 10, "bold"),
+            bg = "#23314F",
+            fg = "#FFFFFF"
         )
 
         heading_label.grid(
-            row=0,
-            column=column,
-            sticky="nsew",
-            padx=2,
-            pady=2
+            row = 0,
+            column = column,
+            sticky = "nsew",
+            padx = 2,
+            pady = 2
         )
 
     total_percentage = 0
 
     # Display each student's information.
-    for row, student in enumerate(students, start=1):
+    for row, student in enumerate(students, start = 1):
 
         coursework_total, percentage, grade = calculate_results(student)
 
@@ -316,17 +312,17 @@ def refresh_student_table(students=None):
 
             label = Label(
                 body_frame,
-                text=detail,
-                font=("Times New Roman", 10),
-                bg="#FFFFFF"
+                text = detail,
+                font = ("Times New Roman", 10),
+                bg = "#FFFFFF"
             )
 
             label.grid(
-                row=row,
-                column=column,
-                sticky="nsew",
-                padx=2,
-                pady=2
+                row = row,
+                column = column,
+                sticky = "nsew",
+                padx = 2,
+                pady = 2
             )
 
     # Calculate the class average.
@@ -341,14 +337,100 @@ def refresh_student_table(students=None):
     if record_action == "view":
 
         summary_label.config(
-            text=f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%"
+            text = f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%"
         )
-
-        summary_label.place(x=25, y=95)
+        summary_label.place(x = 30, y = 100)
 
     else:
         summary_label.place_forget()
 
+# Delete a student record using their name and/or student number.
+def delete_student():
+
+    # Retrieve the search information.
+    name = delete_name_entry.get().strip()
+    number = delete_number_entry.get().strip()
+
+    # Check that at least one search field has been completed.
+    if name == "" and number == "":
+        messagebox.showerror(
+            "Missing Information",
+            "Please enter a student name or number."
+        )
+        return
+
+    # Check that the student number is valid, if provided.
+    if number != "" and not number.isdigit():
+        messagebox.showerror(
+            "Invalid Input",
+            "Student number must contain digits only."
+        )
+        return
+
+    # Load the existing student records.
+    students = load_students()
+
+    # Find records matching the entered information.
+    matching_students = []
+
+    for student in students:
+
+        name_matches = (
+            name == "" or student["name"].lower() == name.lower()
+        )
+
+        number_matches = (
+            number == "" or student["studentNumber"] == int(number)
+        )
+
+        if name_matches and number_matches:
+            matching_students.append(student)
+
+    # Check whether a matching student was found.
+    if len(matching_students) == 0:
+        messagebox.showerror(
+            "Student Not Found",
+            "No matching student record was found."
+        )
+        return
+
+    # Avoid deleting the wrong student if names are duplicated.
+    if len(matching_students) > 1:
+        messagebox.showerror(
+            "Multiple Matches",
+            "Multiple students have this name. Please enter their student number."
+        )
+        return
+
+    student = matching_students[0]
+
+    # Ask for confirmation before deleting the record.
+    confirm = messagebox.askyesno(
+        "Confirm Deletion",
+        f"Are you sure you want to delete {student['name']} "
+        f"({student['studentNumber']})?"
+    )
+
+    if not confirm:
+        return
+
+    # Remove the student record.
+    students.remove(student)
+
+    # Save the updated records to both files.
+    save_students(students)
+
+    # Refresh the displayed student table.
+    refresh_student_table()
+
+    # Clear the search fields.
+    delete_name_entry.delete(0, END)
+    delete_number_entry.delete(0, END)
+
+    messagebox.showinfo(
+        "Success",
+        "Student record deleted successfully."
+    )
 
 # Sort student records according to the selected category and order.
 def apply_sort():
@@ -357,27 +439,27 @@ def apply_sort():
 
     # Sort alphabetically by student name.
     if sort_by_var.get() == "Name":
-        students.sort(key=lambda student: student["name"].lower())
+        students.sort(key = lambda student: student["name"].lower())
 
     # Sort numerically by student number.
     elif sort_by_var.get() == "Student Number":
-        students.sort(key=lambda student: student["studentNumber"])
+        students.sort(key = lambda student: student["studentNumber"])
 
     # Sort according to coursework total.
     elif sort_by_var.get() == "Coursework Total":
-        students.sort(key=lambda student: calculate_results(student)[0])
+        students.sort(key = lambda student: calculate_results(student)[0])
 
     # Sort according to exam mark.
     elif sort_by_var.get() == "Exam Mark":
-        students.sort(key=lambda student: student["examMark"])
+        students.sort(key = lambda student: student["examMark"])
 
     # Sort according to overall percentage.
     elif sort_by_var.get() == "Overall Percentage":
-        students.sort(key=lambda student: calculate_results(student)[1])
+        students.sort(key = lambda student: calculate_results(student)[1])
 
     # Sort alphabetically by grade.
     elif sort_by_var.get() == "Grade":
-        students.sort(key=lambda student: calculate_results(student)[2])
+        students.sort(key = lambda student: calculate_results(student)[2])
 
     # Reverse the records if descending order is selected.
     if sort_order_var.get() == "Descending":
@@ -385,7 +467,6 @@ def apply_sort():
 
     # Refresh the table using the sorted records.
     refresh_student_table(students)
-
 
 # Reset the sorting options and restore the original record order.
 def reset_sort():
@@ -416,8 +497,7 @@ def refresh_highest():
 
     # Update the displayed student information.
     for row, detail in enumerate(details):
-        highest_value_labels[row].config(text=detail)
-
+        highest_value_labels[row].config(text = detail)
 
 # Refresh the lowest overall mark page.
 def refresh_lowest():
@@ -437,7 +517,7 @@ def refresh_lowest():
 
     # Update the displayed student information.
     for row, detail in enumerate(details):
-        lowest_value_labels[row].config(text=detail)
+        lowest_value_labels[row].config(text = detail)
 
 
 # ---- PAGE NAVIGATION AND SEARCH FUNCTIONS ---- #
@@ -449,31 +529,35 @@ def open_records(action):
 
     record_action = action
 
-    # Show sorting controls only when sorting records.
+    # Show the relevant controls for the selected action.
     if record_action == "sort":
-        sort_frame.place(x=25, y=90, width=600, height=45)
+        sort_frame.place(x = 25, y = 90, width = 600, height = 45)
+        delete_frame.place_forget()
+
+    elif record_action == "delete":
+        sort_frame.place_forget()
+        delete_frame.place(x = 25, y = 90, width = 600, height = 45)
+
     else:
         sort_frame.place_forget()
+        delete_frame.place_forget()
 
     # Refresh the records before opening the page.
     refresh_student_table()
 
-    all_students_frame.place(x=0, y=0)
-
+    all_students_frame.place(x = 0, y = 0)
 
 # Open the highest overall mark page.
 def open_highest():
 
     refresh_highest()
-    highest_frame.place(x=0, y=0)
-
+    highest_frame.place(x = 0, y = 0)
 
 # Open the lowest overall mark page.
 def open_lowest():
 
     refresh_lowest()
-    lowest_frame.place(x=0, y=0)
-
+    lowest_frame.place(x = 0, y = 0)
 
 # Search for and display an individual student's results.
 def search_student():
@@ -485,21 +569,20 @@ def search_student():
 
         result = view_individual_student(int(student_number))
 
-        result_label.config(text=result)
+        result_label.config(text = result)
 
     else:
-        result_label.config(text="Please enter a valid student number.")
+        result_label.config(text = "Please enter a valid student number.")
 
     # Clear the input field.
     student_number_entry.delete(0, END)
-
 
 # Return to the main menu and clear the previous search.
 def back_to_individual_menu():
 
     individual_frame.place_forget()
 
-    result_label.config(text="")
+    result_label.config(text = "")
     student_number_entry.delete(0, END)
 
 
@@ -509,7 +592,7 @@ main = Tk()
 
 main.title("Student Manager")
 main.geometry("650x500")
-main.configure(bg="#FFF1DB")
+main.configure(bg = "#FFF1DB")
 main.resizable(False, False)
 
 
@@ -518,13 +601,11 @@ main.resizable(False, False)
 # Create the header frame.
 header = Frame(
     main,
-    bg="#23314F",
-    width=650,
-    height=130
+    bg = "#23314F",
+    width = 650,
+    height = 130
 )
-
-header.place(x=0, y=0)
-
+header.place(x = 0, y = 0)
 
 # Load and resize the application logo.
 pic1 = Image.open(image_path)
@@ -535,23 +616,20 @@ logo = ImageTk.PhotoImage(pic2)
 # Display the application logo.
 imglabel = Label(
     main,
-    image=logo,
-    bg="#FFF1DB"
+    image = logo,
+    bg = "#FFF1DB"
 )
-
-imglabel.place(x=17, y=17)
-
+imglabel.place(x = 17, y = 17)
 
 # Display the application title.
 title_label = Label(
     header,
-    text="STUDENT MANAGER",
-    bg="#23314F",
-    fg="#FFFFFF",
-    font=("Times New Roman", 36, "bold", "italic")
+    text = "STUDENT MANAGER",
+    bg = "#23314F",
+    fg = "#FFFFFF",
+    font = ("Times New Roman", 36, "bold", "italic")
 )
-
-title_label.place(x=135, y=35)
+title_label.place(x = 135, y = 35)
 
 
 # ---- MAIN MENU ---- #
@@ -559,187 +637,204 @@ title_label.place(x=135, y=35)
 # Store the current action for the student records page.
 record_action = "view"
 
-
 # Display the main menu heading.
 main_heading = Label(
     main,
-    text="MAIN MENU",
-    font=("Times New Roman", 16, "bold"),
-    bg="#FFF1DB",
-    fg="#23314F"
+    text = "MAIN MENU",
+    font = ("Times New Roman", 16, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
 )
-
-main_heading.place(x=20, y=155, width=280)
-
+main_heading.place(x = 20, y = 155, width = 280)
 
 # Display the extensions heading.
 extension_heading = Label(
     main,
-    text="EXTENSIONS",
-    font=("Times New Roman", 16, "bold"),
-    bg="#FFF1DB",
-    fg="#23314F"
+    text = "EXTENSIONS",
+    font = ("Times New Roman", 16, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
 )
-
-extension_heading.place(x=350, y=155, width=280)
-
+extension_heading.place(x = 350, y = 155, width = 280)
 
 # Create the vertical separator.
 separator = Frame(
     main,
-    bg="#BDBDBD",
-    width=2,
-    height=330
+    bg = "#BDBDBD",
+    width = 2,
+    height = 330
 )
-
-separator.place(x=325, y=150)
+separator.place(x = 325, y = 150)
 
 
 # ---- Main Menu Buttons ---- #
 
-# Button 1: View all student records.
+# Menu Item 1: View all student records.
 btn_all = Button(
     main,
-    text="All Student Records",
-    font=("Times New Roman", 13, "bold"),
-    command=lambda: open_records("view")
+    text = "All Student Records",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("view")
 )
+btn_all.place(x = 27, y = 200, width = 265, height = 55)
 
-btn_all.place(x=27, y=200, width=265, height=55)
-
-
-# Button 2: View an individual student record.
+# Menu Item 2: View an individual student record.
 btn_individual = Button(
     main,
-    text="Individual Student Records",
-    font=("Times New Roman", 13, "bold"),
-    command=lambda: individual_frame.place(x=0, y=0)
+    text = "Individual Student Records",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: individual_frame.place(x = 0, y = 0)
 )
+btn_individual.place(x = 27, y = 265, width = 265, height = 55)
 
-btn_individual.place(x=27, y=265, width=265, height=55)
-
-
-# Button 3: Show the highest overall mark.
+# Menu Item 3: Show the highest overall mark.
 btn_highest = Button(
     main,
-    text="Highest Overall Mark",
-    font=("Times New Roman", 13, "bold"),
-    command=open_highest
+    text = "Highest Overall Mark",
+    font = ("Times New Roman", 13, "bold"),
+    command = open_highest
 )
+btn_highest.place(x = 27, y = 330, width = 265, height = 55)
 
-btn_highest.place(x=27, y=330, width=265, height=55)
-
-
-# Button 4: Show the lowest overall mark.
+# Menu Item 4: Show the lowest overall mark.
 btn_lowest = Button(
     main,
-    text="Lowest Overall Mark",
-    font=("Times New Roman", 13, "bold"),
-    command=open_lowest
+    text = "Lowest Overall Mark",
+    font = ("Times New Roman", 13, "bold"),
+    command = open_lowest
 )
-
-btn_lowest.place(x=27, y=395, width=265, height=55)
+btn_lowest.place(x = 27, y = 395, width = 265, height = 55)
 
 
 # ---- Extension Buttons ---- #
 
-# Button 5: Sort student records.
+# Menu Item 5: Sort student records.
 btn_sort = Button(
     main,
-    text="Sort Student Records",
-    font=("Times New Roman", 13, "bold"),
-    command=lambda: open_records("sort")
+    text = "Sort Student Records",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("sort")
 )
+btn_sort.place(x = 357, y = 200, width = 265, height = 55)
 
-btn_sort.place(x=357, y=200, width=265, height=55)
-
-
-# Button 6: Add a student record.
+# Menu Item 6: Add a student record.
 btn_add = Button(
     main,
-    text="Add Student Record",
-    font=("Times New Roman", 13, "bold"),
-    command=lambda: add_frame.place(x=0, y=0)
+    text = "Add Student Record",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: add_frame.place(x = 0, y = 0)
 )
+btn_add.place(x = 357, y = 265, width = 265, height = 55)
 
-btn_add.place(x=357, y=265, width=265, height=55)
-
-
-# Button 7: Delete a student record.
+# Menu Item 7: Delete a student record.
 btn_delete = Button(
     main,
-    text="Delete Student Record",
-    font=("Times New Roman", 13, "bold"),
-    command=lambda: open_records("delete")
+    text = "Delete Student Record",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("delete")
 )
+btn_delete.place(x = 357, y = 330, width = 265, height = 55)
 
-btn_delete.place(x=357, y=330, width=265, height=55)
-
-
-# Button 8: Update a student record.
+# Menu Item 8: Update a student record.
 btn_update = Button(
     main,
-    text="Update Student Record",
-    font=("Times New Roman", 13, "bold"),
-    command=lambda: open_records("update")
+    text = "Update Student Record",
+    font = ("Times New Roman", 13, "bold"),
+    command = lambda: open_records("update")
 )
-
-btn_update.place(x=357, y=395, width=265, height=55)
+btn_update.place(x = 357, y = 395, width = 265, height = 55)
 
 
 # ---- ALL STUDENT RECORDS PAGE ---- #
 
 all_students_frame = Frame(
     main,
-    bg="#FFF1DB",
-    width=650,
-    height=500
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
 )
-
 
 # Display the page heading.
 heading = Label(
     all_students_frame,
-    text="ALL STUDENT RECORDS",
-    font=("Times New Roman", 22, "bold"),
-    bg="#23314F",
-    fg="#FFFFFF"
+    text = "ALL STUDENT RECORDS",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
 )
-
-heading.place(x=25, y=20, width=600, height=60)
+heading.place(x = 25, y = 20, width = 600, height = 60)
 
 
 # ---- Sorting Controls ---- #
 
 sort_frame = Frame(
     all_students_frame,
-    bg="#FFF1DB"
+    bg = "#FFF1DB"
 )
 
-sort_frame.place(x=25, y=95, width=600, height=45)
+# Create the delete search frame.
+delete_frame = Frame(all_students_frame, bg = "#FFF1DB")
 
+# Display the student name label.
+name_label = Label(
+    delete_frame,
+    text = "Name:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+name_label.place(x = 0, y = 10)
+
+# Create the student name input field.
+delete_name_entry = Entry(
+    delete_frame,
+    font = ("Times New Roman", 10)
+)
+delete_name_entry.place(x = 50, y = 5, width = 140, height = 30)
+
+# Display the student number label.
+number_label = Label(
+    delete_frame,
+    text = "Number:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+number_label.place(x = 205, y = 10)
+
+# Create the student number input field.
+delete_number_entry = Entry(
+    delete_frame,
+    font = ("Times New Roman", 10)
+)
+delete_number_entry.place(x = 270, y = 5, width = 120, height = 30)
+
+# Create the Delete button.
+delete_button = Button(
+    delete_frame,
+    text = "Delete Student",
+    font = ("Times New Roman", 10, "bold"),
+    command = delete_student
+)
+delete_button.place(x = 420, y = 5, width = 150, height = 30)
 
 # Store the selected sorting category.
 sort_by_var = StringVar()
 sort_by_var.set("Name")
 
-
 # Store the selected sorting order.
 sort_order_var = StringVar()
 sort_order_var.set("Ascending")
 
-
 # Display the category label.
 sort_label = Label(
     sort_frame,
-    text="Sort by:",
-    font=("Times New Roman", 11, "bold"),
-    bg="#FFF1DB",
-    fg="#23314F"
+    text = "Sort by:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
 )
-
-sort_label.place(x=0, y=8)
-
+sort_label.place(x = 0, y = 8)
 
 # Create the category dropdown.
 sort_menu = OptionMenu(
@@ -752,22 +847,18 @@ sort_menu = OptionMenu(
     "Overall Percentage",
     "Grade"
 )
-
-sort_menu.config(font=("Times New Roman", 10))
-sort_menu.place(x=65, y=3, width=170, height=35)
-
+sort_menu.config(font = ("Times New Roman", 10))
+sort_menu.place(x = 65, y = 3, width = 170, height = 35)
 
 # Display the order label.
 order_label = Label(
     sort_frame,
-    text="Order:",
-    font=("Times New Roman", 11, "bold"),
-    bg="#FFF1DB",
-    fg="#23314F"
+    text = "Order:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
 )
-
-order_label.place(x=250, y=8)
-
+order_label.place(x = 250, y = 8)
 
 # Create the order dropdown.
 order_menu = OptionMenu(
@@ -776,31 +867,26 @@ order_menu = OptionMenu(
     "Ascending",
     "Descending"
 )
-
-order_menu.config(font=("Times New Roman", 10))
-order_menu.place(x=305, y=3, width=130, height=35)
-
+order_menu.config(font = ("Times New Roman", 10))
+order_menu.place(x = 305, y = 3, width = 130, height = 35)
 
 # Create the Apply button.
 apply_button = Button(
     sort_frame,
-    text="Apply",
-    font=("Times New Roman", 10, "bold"),
-    command=apply_sort
+    text = "Apply",
+    font = ("Times New Roman", 10, "bold"),
+    command = apply_sort
 )
-
-apply_button.place(x=445, y=3, width=75, height=33)
-
+apply_button.place(x = 445, y = 3, width = 75, height = 33)
 
 # Create the Reset button.
 reset_button = Button(
     sort_frame,
-    text="Reset",
-    font=("Times New Roman", 10, "bold"),
-    command=reset_sort
+    text = "Reset",
+    font = ("Times New Roman", 10, "bold"),
+    command = reset_sort
 )
-
-reset_button.place(x=530, y=3, width=70, height=33)
+reset_button.place(x = 530, y = 3, width = 70, height = 33)
 
 
 # ---- Student Table ---- #
@@ -808,16 +894,13 @@ reset_button.place(x=530, y=3, width=70, height=33)
 # Create the table body area.
 body_frame = Frame(
     all_students_frame,
-    bg="#FFFFFF"
+    bg = "#FFFFFF"
 )
-
-body_frame.place(x=25, y=135, width=600, height=290)
-
+body_frame.place(x = 25, y = 135, width = 600, height = 290)
 
 # Allow the six table columns to expand evenly.
 for column in range(6):
-    body_frame.grid_columnconfigure(column, weight=1)
-
+    body_frame.grid_columnconfigure(column, weight = 1)
 
 # Store the student table headings.
 headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
@@ -827,139 +910,119 @@ headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
 
 summary_label = Label(
     all_students_frame,
-    text="",
-    font=("Times New Roman", 13, "bold"),
-    bg="#FFF1DB",
-    fg="#23314F"
+    text = "",
+    font = ("Times New Roman", 13, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
 )
-
-summary_label.place(x=25, y=95)
-
+summary_label.place(x = 25, y = 95)
 
 # Display the student records when the application starts.
 refresh_student_table()
 
-
 # Create the back button.
 back_button = Button(
     all_students_frame,
-    text="Back to Menu",
-    font=("Times New Roman", 12, "bold"),
-    command=all_students_frame.place_forget
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = all_students_frame.place_forget
 )
-
-back_button.place(x=250, y=445, width=150, height=35)
+back_button.place(x = 250, y = 445, width = 150, height = 35)
 
 
 # ---- INDIVIDUAL STUDENT RECORDS PAGE ---- #
 
 individual_frame = Frame(
     main,
-    bg="#FFF1DB",
-    width=650,
-    height=500
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
 )
-
 
 # Display the page heading.
 heading = Label(
     individual_frame,
-    text="INDIVIDUAL STUDENT RECORDS",
-    font=("Times New Roman", 22, "bold"),
-    bg="#23314F",
-    fg="#FFFFFF"
+    text = "INDIVIDUAL STUDENT RECORDS",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
 )
-
-heading.place(x=25, y=20, width=600, height=60)
-
+heading.place(x = 25, y = 20, width = 600, height = 60)
 
 # Ask the user to enter a student number.
 instruction_label = Label(
     individual_frame,
-    text="Enter Student Number:",
-    font=("Times New Roman", 14, "bold"),
-    bg="#FFF1DB",
-    fg="#23314F"
+    text = "Enter Student Number:",
+    font = ("Times New Roman", 14, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
 )
-
-instruction_label.place(x=120, y=115)
-
+instruction_label.place(x = 120, y = 115)
 
 # Create the student number input field.
 student_number_entry = Entry(
     individual_frame,
-    font=("Times New Roman", 14),
-    justify="center"
+    font = ("Times New Roman", 14),
+    justify = "center"
 )
-
-student_number_entry.place(x=350, y=115, width=180, height=30)
-
+student_number_entry.place(x = 350, y = 115, width = 180, height = 30)
 
 # Create the area for displaying student results.
 result_label = Label(
     individual_frame,
-    text="",
-    font=("Times New Roman", 13),
-    bg="#FFFFFF",
-    fg="#23314F",
-    justify="left",
-    anchor="w",
-    padx=15,
-    pady=15
+    text = "",
+    font = ("Times New Roman", 13),
+    bg = "#FFFFFF",
+    fg = "#23314F",
+    justify = "left",
+    anchor = "w",
+    padx = 15,
+    pady = 15
 )
-
-result_label.place(x=100, y=215, width=450, height=180)
-
+result_label.place(x = 100, y = 215, width = 450, height = 180)
 
 # Create the search button.
 search_button = Button(
     individual_frame,
-    text="Find Student",
-    font=("Times New Roman", 12, "bold"),
-    command=search_student
+    text = "Find Student",
+    font = ("Times New Roman", 12, "bold"),
+    command = search_student
 )
-
-search_button.place(x=100, y=170, width=150, height=35)
-
+search_button.place(x = 100, y = 170, width = 150, height = 35)
 
 # Create the back button.
 back_button = Button(
     individual_frame,
-    text="Back to Menu",
-    font=("Times New Roman", 12, "bold"),
-    command=back_to_individual_menu
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = back_to_individual_menu
 )
-
-back_button.place(x=250, y=430, width=150, height=35)
+back_button.place(x = 250, y = 430, width = 150, height = 35)
 
 
 # ---- HIGHEST OVERALL MARK PAGE ---- #
 
 highest_frame = Frame(
     main,
-    bg="#FFF1DB",
-    width=650,
-    height=500
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
 )
-
 
 # Display the page heading.
 heading = Label(
     highest_frame,
-    text="HIGHEST OVERALL MARK",
-    font=("Times New Roman", 22, "bold"),
-    bg="#23314F",
-    fg="#FFFFFF"
+    text = "HIGHEST OVERALL MARK",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
 )
-
-heading.place(x=25, y=20, width=600, height=60)
-
+heading.place(x = 25, y = 20, width = 600, height = 60)
 
 # Retrieve the highest-scoring student.
 highest_student = show_highest_student()
 
 coursework_total, percentage, grade = calculate_results(highest_student)
-
 
 # Store the student's information for display.
 details = [
@@ -980,36 +1043,30 @@ badge_image = badge_image.resize((60, 60))
 
 badge_photo = ImageTk.PhotoImage(badge_image)
 
-
 # Display the award badge.
 badge_label = Label(
     highest_frame,
-    image=badge_photo,
-    bg="#FFF1DB"
+    image = badge_photo,
+    bg = "#FFF1DB"
 )
-
 badge_label.image = badge_photo
-badge_label.place(x=290, y=360)
+badge_label.place(x = 290, y = 360)
 
 
 # ---- Results Display ---- #
 
 result_frame_highest = Frame(
     highest_frame,
-    bg="#FFF1DB"
+    bg = "#FFF1DB"
 )
-
-result_frame_highest.place(x=100, y=100, width=450, height=250)
-
+result_frame_highest.place(x = 100, y = 100, width = 450, height = 250)
 
 # Set the two result columns.
-result_frame_highest.grid_columnconfigure(0, weight=1)
-result_frame_highest.grid_columnconfigure(1, weight=2)
-
+result_frame_highest.grid_columnconfigure(0, weight = 1)
+result_frame_highest.grid_columnconfigure(1, weight = 2)
 
 # Store the value labels so they can be refreshed.
 highest_value_labels = []
-
 
 # Display each piece of student information.
 for row, detail in enumerate(details):
@@ -1017,85 +1074,79 @@ for row, detail in enumerate(details):
     # Display the information heading.
     heading_label = Label(
         result_frame_highest,
-        text=detail[0] + ":",
-        font=("Times New Roman", 11, "bold"),
-        bg="#23314F",
-        fg="#FFFFFF",
-        width=10,
-        anchor="w",
-        padx=5
+        text = detail[0] + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
     )
 
     heading_label.grid(
-        row=row,
-        column=0,
-        sticky="nsew",
-        padx=10,
-        pady=5,
-        ipady=4
+        row = row,
+        column = 0,
+        sticky = "nsew",
+        padx = 10,
+        pady = 5,
+        ipady = 4
     )
 
 
     # Display the corresponding value.
     value_label = Label(
         result_frame_highest,
-        text=detail[1],
-        font=("Times New Roman", 11),
-        bg="#FFFFFF",
-        fg="#23314F",
-        relief="solid",
-        bd=1
+        text = detail[1],
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
     )
 
     value_label.grid(
-        row=row,
-        column=1,
-        sticky="nsew",
-        padx=5,
-        pady=5
+        row = row,
+        column = 1,
+        sticky = "nsew",
+        padx = 5,
+        pady = 5
     )
 
     highest_value_labels.append(value_label)
 
-
 # Create the back button.
 back_button = Button(
     highest_frame,
-    text="Back to Menu",
-    font=("Times New Roman", 12, "bold"),
-    command=highest_frame.place_forget
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = highest_frame.place_forget
 )
-
-back_button.place(x=250, y=430, width=150, height=35)
+back_button.place(x = 250, y = 430, width = 150, height = 35)
 
 
 # ---- LOWEST OVERALL MARK PAGE ---- #
 
 lowest_frame = Frame(
     main,
-    bg="#FFF1DB",
-    width=650,
-    height=500
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
 )
-
 
 # Display the page heading.
 heading = Label(
     lowest_frame,
-    text="LOWEST OVERALL MARK",
-    font=("Times New Roman", 22, "bold"),
-    bg="#23314F",
-    fg="#FFFFFF"
+    text = "LOWEST OVERALL MARK",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
 )
-
-heading.place(x=25, y=20, width=600, height=60)
-
+heading.place(x = 25, y = 20, width = 600, height = 60)
 
 # Retrieve the lowest-scoring student.
 lowest_student = show_lowest_student()
 
 coursework_total, percentage, grade = calculate_results(lowest_student)
-
 
 # Store the student's information for display.
 details = [
@@ -1112,20 +1163,16 @@ details = [
 
 result_frame_lowest = Frame(
     lowest_frame,
-    bg="#FFF1DB"
+    bg = "#FFF1DB"
 )
-
-result_frame_lowest.place(x=100, y=130, width=450, height=250)
-
+result_frame_lowest.place(x = 100, y = 130, width = 450, height = 250)
 
 # Set the two result columns.
-result_frame_lowest.grid_columnconfigure(0, weight=1)
-result_frame_lowest.grid_columnconfigure(1, weight=2)
-
+result_frame_lowest.grid_columnconfigure(0, weight = 1)
+result_frame_lowest.grid_columnconfigure(1, weight = 2)
 
 # Store the value labels so they can be refreshed.
 lowest_value_labels = []
-
 
 # Display each piece of student information.
 for row, detail in enumerate(details):
@@ -1133,94 +1180,86 @@ for row, detail in enumerate(details):
     # Display the information heading.
     heading_label = Label(
         result_frame_lowest,
-        text=detail[0] + ":",
-        font=("Times New Roman", 11, "bold"),
-        bg="#23314F",
-        fg="#FFFFFF",
-        width=10,
-        anchor="w",
-        padx=5
+        text = detail[0] + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
     )
 
     heading_label.grid(
-        row=row,
-        column=0,
-        sticky="nsew",
-        padx=10,
-        pady=5,
-        ipady=4
+        row = row,
+        column = 0,
+        sticky = "nsew",
+        padx = 10,
+        pady = 5,
+        ipady = 4
     )
-
 
     # Display the corresponding value.
     value_label = Label(
         result_frame_lowest,
-        text=detail[1],
-        font=("Times New Roman", 11),
-        bg="#FFFFFF",
-        fg="#23314F",
-        relief="solid",
-        bd=1
+        text = detail[1],
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
     )
 
     value_label.grid(
-        row=row,
-        column=1,
-        sticky="nsew",
-        padx=5,
-        pady=5
+        row = row,
+        column = 1,
+        sticky = "nsew",
+        padx = 5,
+        pady = 5
     )
 
     lowest_value_labels.append(value_label)
 
-
 # Create the back button.
 back_button = Button(
     lowest_frame,
-    text="Back to Menu",
-    font=("Times New Roman", 12, "bold"),
-    command=lowest_frame.place_forget
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = lowest_frame.place_forget
 )
-
-back_button.place(x=250, y=430, width=150, height=35)
+back_button.place(x = 250, y = 430, width = 150, height = 35)
 
 
 # ---- ADD STUDENT RECORD PAGE ---- #
 
 add_frame = Frame(
     main,
-    bg="#FFF1DB",
-    width=650,
-    height=500
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
 )
-
 
 # Display the page heading.
 heading = Label(
     add_frame,
-    text="ADD STUDENT RECORD",
-    font=("Times New Roman", 22, "bold"),
-    bg="#23314F",
-    fg="#FFFFFF"
+    text = "ADD STUDENT RECORD",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
 )
-
-heading.place(x=25, y=20, width=600, height=60)
+heading.place(x = 25, y = 20, width = 600, height = 60)
 
 
 # ---- Student Form ---- #
 
 form_frame = Frame(
     add_frame,
-    bg="#FFF1DB"
+    bg = "#FFF1DB"
 )
-
-form_frame.place(x=100, y=120, width=450, height=280)
-
+form_frame.place(x = 100, y = 120, width = 450, height = 280)
 
 # Set the two form columns.
-form_frame.grid_columnconfigure(0, weight=1)
-form_frame.grid_columnconfigure(1, weight=2)
-
+form_frame.grid_columnconfigure(0, weight = 1)
+form_frame.grid_columnconfigure(1, weight = 2)
 
 # Store the student information fields.
 fields = [
@@ -1232,7 +1271,6 @@ fields = [
     "Exam Mark"
 ]
 
-
 # Create the input fields.
 name_entry = Entry(form_frame)
 number_entry = Entry(form_frame)
@@ -1240,7 +1278,6 @@ cw1_entry = Entry(form_frame)
 cw2_entry = Entry(form_frame)
 cw3_entry = Entry(form_frame)
 exam_entry = Entry(form_frame)
-
 
 # Store all entry widgets in a list.
 entries = [
@@ -1252,47 +1289,45 @@ entries = [
     exam_entry
 ]
 
-
 # Create each field label and corresponding input box.
 for row, field in enumerate(fields):
 
     # Display the field label.
     field_label = Label(
         form_frame,
-        text=field + ":",
-        font=("Times New Roman", 11, "bold"),
-        bg="#23314F",
-        fg="#FFFFFF",
-        width=10,
-        anchor="w",
-        padx=5
+        text = field + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
     )
 
     field_label.grid(
-        row=row,
-        column=0,
-        sticky="nsew",
-        padx=10,
-        pady=5,
-        ipady=4
+        row = row,
+        column = 0,
+        sticky = "nsew",
+        padx = 10,
+        pady = 5,
+        ipady = 4
     )
-
 
     # Configure and position the input field.
     entries[row].config(
-        font=("Times New Roman", 11),
-        bg="#FFFFFF",
-        fg="#23314F",
-        relief="solid",
-        bd=1
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
     )
 
     entries[row].grid(
-        row=row,
-        column=1,
-        sticky="nsew",
-        padx=5,
-        pady=5
+        row = row,
+        column = 1,
+        sticky = "nsew",
+        padx = 5,
+        pady = 5
     )
 
 
@@ -1301,24 +1336,20 @@ for row, field in enumerate(fields):
 # Create the Add Student button.
 add_button = Button(
     add_frame,
-    text="Add Student",
-    font=("Times New Roman", 12, "bold"),
-    command=add_student
+    text = "Add Student",
+    font = ("Times New Roman", 12, "bold"),
+    command = add_student
 )
-
-add_button.place(x=165, y=430, width=150, height=35)
-
+add_button.place(x = 165, y = 430, width = 150, height = 35)
 
 # Create the back button.
 back_button = Button(
     add_frame,
-    text="Back to Menu",
-    font=("Times New Roman", 12, "bold"),
-    command=add_frame.place_forget
+    text = "Back to Menu",
+    font = ("Times New Roman", 12, "bold"),
+    command = add_frame.place_forget
 )
-
-back_button.place(x=335, y=430, width=150, height=35)
-
+back_button.place(x = 335, y = 430, width = 150, height = 35)
 
 # RUN THE APPLICATION #
 main.mainloop()
