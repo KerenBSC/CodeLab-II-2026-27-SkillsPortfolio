@@ -12,13 +12,17 @@ from PIL import Image, ImageTk
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Set the paths for the student records and images.
-txt_path = os.path.join(base_path, "Assessment 1 - Skills Portfolio", "A1 - Resources", "studentMarks.txt")
+txt_path = os.path.join(base_path, "..", "..", "A1 - Resources", "studentMarks.txt")
 json_path = os.path.join(base_path, "studentMarks.json")
 image_path = os.path.join(base_path, "LOGO.png")
 rankimage_path = os.path.join(base_path, "HighestRank.png")
 
 
-# ---- STUDENT DATA MANAGEMENT --- #
+# ---- STUDENT DATA MANAGEMENT ---- #
+
+# Store the student record selected for updating.
+selected_student = None
+selected_student_number = None
 
 # Convert the original TXT file into a JSON database.
 def convert_to_json():
@@ -85,8 +89,16 @@ def save_students(students):
 def validate_student(name, number, cw1, cw2, cw3, exam):
 
     # Check that the student name is not empty.
-    if name == "":
+    if not name.strip():
         messagebox.showerror("Invalid Input", "Please enter a student name.")
+        return False
+
+    # Prevent commas from interfering with the TXT file format.
+    if "," in name:
+        messagebox.showerror(
+            "Invalid Input",
+            "Student names cannot contain commas."
+        )
         return False
 
     # Check that the student number contains four digits.
@@ -165,7 +177,7 @@ def add_student():
         entry.delete(0, END)
 
 
-# ---- STUDENT RESULTS AND CALCULATIONS --- #
+# ---- STUDENT RESULTS AND CALCULATIONS ---- #
 
 # Calculate a student's coursework total, percentage and grade.
 def calculate_results(student):
@@ -232,10 +244,15 @@ def show_highest_student():
 
     # Compare the overall marks of all students.
     for student in students:
-        if (
-            calculate_results(student)[0] + student["examMark"] >
-            calculate_results(highest_student)[0] + highest_student["examMark"]
-        ):
+
+        student_total = calculate_results(student)[0] + student["examMark"]
+
+        highest_total = (
+            calculate_results(highest_student)[0] +
+            highest_student["examMark"]
+        )
+
+        if student_total > highest_total:
             highest_student = student
 
     return highest_student
@@ -249,10 +266,15 @@ def show_lowest_student():
 
     # Compare the overall marks of all students.
     for student in students:
-        if (
-            calculate_results(student)[0] + student["examMark"] <
-            calculate_results(lowest_student)[0] + lowest_student["examMark"]
-        ):
+
+        student_total = calculate_results(student)[0] + student["examMark"]
+
+        lowest_total = (
+            calculate_results(lowest_student)[0] +
+            lowest_student["examMark"]
+        )
+
+        if student_total < lowest_total:
             lowest_student = student
 
     return lowest_student
@@ -404,6 +426,14 @@ def delete_student():
 
     student = matching_students[0]
 
+    # Ensure at least one student record remains.
+    if len(students) == 1:
+        messagebox.showerror(
+            "Cannot Delete Student",
+            "At least one student record must remain."
+        )
+        return
+
     # Ask for confirmation before deleting the record.
     confirm = messagebox.askyesno(
         "Confirm Deletion",
@@ -525,22 +555,33 @@ def refresh_lowest():
 # Open the student records page for the selected action.
 def open_records(action):
 
-    global record_action
+    global record_action, selected_student, selected_student_number
 
     record_action = action
 
-    # Show the relevant controls for the selected action.
+    # Hide all action-specific controls.
+    sort_frame.place_forget()
+    delete_frame.place_forget()
+    update_frame.place_forget()
+    update_student_frame.place_forget()
+
+    # Show the controls for the selected action.
     if record_action == "sort":
         sort_frame.place(x = 25, y = 90, width = 600, height = 45)
-        delete_frame.place_forget()
 
     elif record_action == "delete":
-        sort_frame.place_forget()
         delete_frame.place(x = 25, y = 90, width = 600, height = 45)
 
-    else:
-        sort_frame.place_forget()
-        delete_frame.place_forget()
+    elif record_action == "update":
+
+        update_frame.place(x = 25, y = 90, width = 600, height = 45)
+
+        # Clear the previous student selection.
+        selected_student = None
+        selected_student_number = None
+
+        update_name_entry.delete(0, END)
+        update_number_entry.delete(0, END)
 
     # Refresh the records before opening the page.
     refresh_student_table()
@@ -562,7 +603,8 @@ def open_lowest():
 # Search for and display an individual student's results.
 def search_student():
 
-    student_number = student_number_entry.get()
+    # Retrieve the student number entered by the user.
+    student_number = student_number_entry.get().strip()
 
     # Check whether the entered number is valid.
     if student_number.isdigit():
@@ -576,6 +618,192 @@ def search_student():
 
     # Clear the input field.
     student_number_entry.delete(0, END)
+
+# Return to the student search page.
+def back_to_update_search():
+
+    update_student_frame.place_forget()
+    all_students_frame.place(x = 0, y = 0)
+
+# Find a student record to update.
+def find_student_to_update():
+
+    global selected_student, selected_student_number
+
+    # Retrieve the search information.
+    name = update_name_entry.get().strip()
+    number = update_number_entry.get().strip()
+
+    # Check that at least one search field has been completed.
+    if name == "" and number == "":
+        messagebox.showerror(
+            "Missing Information",
+            "Please enter a student name or number."
+        )
+        return
+
+    # Check that the student number contains digits only.
+    if number != "" and not number.isdigit():
+        messagebox.showerror(
+            "Invalid Input",
+            "Student number must contain digits only."
+        )
+        return
+
+    # Load the existing student records.
+    students = load_students()
+
+    # Find records matching the entered information.
+    matching_students = []
+
+    for student in students:
+
+        name_matches = (
+            name == "" or student["name"].lower() == name.lower()
+        )
+
+        number_matches = (
+            number == "" or student["studentNumber"] == int(number)
+        )
+
+        if name_matches and number_matches:
+            matching_students.append(student)
+
+    # Check whether a matching student was found.
+    if len(matching_students) == 0:
+        messagebox.showerror(
+            "Student Not Found",
+            "No matching student record was found."
+        )
+        return
+
+    # Prevent updating the wrong student if names are duplicated.
+    if len(matching_students) > 1:
+        messagebox.showerror(
+            "Multiple Matches",
+            "Multiple students have this name. Please enter their student number."
+        )
+        return
+
+    # Store the selected student's record and original number.
+    selected_student = matching_students[0]
+    selected_student_number = selected_student["studentNumber"]
+
+    # Fill the update form with the student's existing information.
+    edit_name_entry.delete(0, END)
+    edit_name_entry.insert(0, selected_student["name"])
+
+    edit_number_entry.delete(0, END)
+    edit_number_entry.insert(0, str(selected_student["studentNumber"]))
+
+    edit_cw1_entry.delete(0, END)
+    edit_cw1_entry.insert(0, str(selected_student["coursework1"]))
+
+    edit_cw2_entry.delete(0, END)
+    edit_cw2_entry.insert(0, str(selected_student["coursework2"]))
+
+    edit_cw3_entry.delete(0, END)
+    edit_cw3_entry.insert(0, str(selected_student["coursework3"]))
+
+    edit_exam_entry.delete(0, END)
+    edit_exam_entry.insert(0, str(selected_student["examMark"]))
+
+    # Hide the search page and open the update form.
+    all_students_frame.place_forget()
+    update_student_frame.place(x = 0, y = 0)
+
+# Update the selected student's record.
+def update_student():
+
+    global selected_student, selected_student_number
+
+    # Check that a student has been selected.
+    if selected_student is None:
+        messagebox.showerror(
+            "No Student Selected",
+            "Please find a student before updating their record."
+        )
+        return
+
+    # Retrieve the information entered into the update form.
+    name = edit_name_entry.get().strip()
+    number = edit_number_entry.get().strip()
+    cw1 = edit_cw1_entry.get().strip()
+    cw2 = edit_cw2_entry.get().strip()
+    cw3 = edit_cw3_entry.get().strip()
+    exam = edit_exam_entry.get().strip()
+
+    # Validate the entered information.
+    if not validate_student(name, number, cw1, cw2, cw3, exam):
+        return
+
+    # Load the latest student records.
+    students = load_students()
+
+    # Check whether the new student number already exists.
+    for student in students:
+
+        if (
+            student["studentNumber"] == int(number)
+            and student["studentNumber"] != selected_student_number
+        ):
+            messagebox.showerror(
+                "Duplicate Student",
+                "This student number already exists."
+            )
+            return
+
+    # Ask the user to confirm the changes.
+    confirm = messagebox.askyesno(
+        "Confirm Update",
+        f"Are you sure you want to update the record for {selected_student['name']}?"
+    )
+
+    if not confirm:
+        return
+
+    # Create the updated student record.
+    updated_student = {
+        "studentNumber": int(number),
+        "name": name,
+        "coursework1": int(cw1),
+        "coursework2": int(cw2),
+        "coursework3": int(cw3),
+        "examMark": int(exam)
+    }
+
+    # Find the original record and replace it.
+    student_found = False
+
+    for index, student in enumerate(students):
+
+        if student["studentNumber"] == selected_student_number:
+            students[index] = updated_student
+            student_found = True
+            break
+
+    # Stop if the original student record could not be found.
+    if not student_found:
+        messagebox.showerror(
+            "Student Not Found",
+            "The original student record could not be found."
+        )
+        return
+
+    # Save the updated records to both files.
+    save_students(students)
+
+    # Update the selected student information.
+    selected_student = updated_student
+    selected_student_number = updated_student["studentNumber"]
+
+    # Refresh the student records table.
+    refresh_student_table()
+
+    messagebox.showinfo(
+        "Success",
+        "Student record updated successfully."
+    )
 
 # Return to the main menu and clear the previous search.
 def back_to_individual_menu():
@@ -596,7 +824,7 @@ main.configure(bg = "#FFF1DB")
 main.resizable(False, False)
 
 
-# ---- APPLICATION HEADER ---- 3
+# ---- APPLICATION HEADER ---- #
 
 # Create the header frame.
 header = Frame(
@@ -667,7 +895,7 @@ separator = Frame(
 separator.place(x = 325, y = 150)
 
 
-# ---- Main Menu Buttons ---- #
+# ---- MAIN MENU BUTTONS ---- #
 
 # Menu Item 1: View all student records.
 btn_all = Button(
@@ -706,7 +934,7 @@ btn_lowest = Button(
 btn_lowest.place(x = 27, y = 395, width = 265, height = 55)
 
 
-# ---- Extension Buttons ---- #
+# ---- EXTENSION BUTTONS ---- #
 
 # Menu Item 5: Sort student records.
 btn_sort = Button(
@@ -765,7 +993,7 @@ heading = Label(
 heading.place(x = 25, y = 20, width = 600, height = 60)
 
 
-# ---- Sorting Controls ---- #
+# ---- SORTING CONTROLS ---- #
 
 sort_frame = Frame(
     all_students_frame,
@@ -774,6 +1002,55 @@ sort_frame = Frame(
 
 # Create the delete search frame.
 delete_frame = Frame(all_students_frame, bg = "#FFF1DB")
+
+# Create the update search frame.
+update_frame = Frame(
+    all_students_frame,
+    bg = "#FFF1DB"
+)
+
+# Display the student name label.
+update_name_label = Label(
+    update_frame,
+    text = "Name:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+update_name_label.place(x = 0, y = 10)
+
+# Create the student name input field.
+update_name_entry = Entry(
+    update_frame,
+    font = ("Times New Roman", 10)
+)
+update_name_entry.place(x = 50, y = 5, width = 140, height = 30)
+
+# Display the student number label.
+update_number_label = Label(
+    update_frame,
+    text = "Number:",
+    font = ("Times New Roman", 11, "bold"),
+    bg = "#FFF1DB",
+    fg = "#23314F"
+)
+update_number_label.place(x = 205, y = 10)
+
+# Create the student number input field.
+update_number_entry = Entry(
+    update_frame,
+    font = ("Times New Roman", 10)
+)
+update_number_entry.place(x = 270, y = 5, width = 120, height = 30)
+
+# Add the button to search for a student.
+find_student_button = Button(
+    update_frame,
+    text = "Find Student",
+    font = ("Times New Roman", 10, "bold"),
+    command = find_student_to_update
+)
+find_student_button.place(x = 465, y = 8)
 
 # Display the student name label.
 name_label = Label(
@@ -889,7 +1166,7 @@ reset_button = Button(
 reset_button.place(x = 530, y = 3, width = 70, height = 33)
 
 
-# ---- Student Table ---- #
+# ---- STUDENT TABLE ---- #
 
 # Create the table body area.
 body_frame = Frame(
@@ -906,7 +1183,7 @@ for column in range(6):
 headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
 
 
-# ---- Class Summary ---- #
+# ---- CLASS SUMMARY ---- #
 
 summary_label = Label(
     all_students_frame,
@@ -1035,7 +1312,7 @@ details = [
 ]
 
 
-# ---- Award Badge ---- #
+# ---- AWARD BADGE ---- #
 
 # Load and resize the award badge image.
 badge_image = Image.open(rankimage_path)
@@ -1053,7 +1330,7 @@ badge_label.image = badge_photo
 badge_label.place(x = 290, y = 360)
 
 
-# ---- Results Display ---- #
+# ---- RESULTS DISPLAY ---- #
 
 result_frame_highest = Frame(
     highest_frame,
@@ -1159,7 +1436,7 @@ details = [
 ]
 
 
-# ---- Results Display ---- #
+# ---- RESULTS DISPLAY ---- #
 
 result_frame_lowest = Frame(
     lowest_frame,
@@ -1249,7 +1526,7 @@ heading = Label(
 heading.place(x = 25, y = 20, width = 600, height = 60)
 
 
-# ---- Student Form ---- #
+# ---- STUDENT FORM ---- #
 
 form_frame = Frame(
     add_frame,
@@ -1331,7 +1608,7 @@ for row, field in enumerate(fields):
     )
 
 
-# ---- Form Buttons ---- #
+# ---- FORM BUTTONS ---- #
 
 # Create the Add Student button.
 add_button = Button(
@@ -1351,5 +1628,127 @@ back_button = Button(
 )
 back_button.place(x = 335, y = 430, width = 150, height = 35)
 
-# RUN THE APPLICATION #
+# ---- UPDATE STUDENT RECORD PAGE ---- #
+
+update_student_frame = Frame(
+    main,
+    bg = "#FFF1DB",
+    width = 650,
+    height = 500
+)
+
+# Display the page heading.
+heading = Label(
+    update_student_frame,
+    text = "UPDATE STUDENT RECORD",
+    font = ("Times New Roman", 22, "bold"),
+    bg = "#23314F",
+    fg = "#FFFFFF"
+)
+heading.place(x = 25, y = 20, width = 600, height = 60)
+
+
+# ---- STUDENT UPDATE FORM ---- #
+
+edit_form_frame = Frame(
+    update_student_frame,
+    bg = "#FFF1DB"
+)
+edit_form_frame.place(x = 100, y = 120, width = 450, height = 280)
+
+# Set the two form columns.
+edit_form_frame.grid_columnconfigure(0, weight = 1)
+edit_form_frame.grid_columnconfigure(1, weight = 2)
+
+# Store the student information fields.
+edit_fields = [
+    "Name",
+    "Number",
+    "Coursework 1",
+    "Coursework 2",
+    "Coursework 3",
+    "Exam Mark"
+]
+
+# Create the input fields.
+edit_name_entry = Entry(edit_form_frame)
+edit_number_entry = Entry(edit_form_frame)
+edit_cw1_entry = Entry(edit_form_frame)
+edit_cw2_entry = Entry(edit_form_frame)
+edit_cw3_entry = Entry(edit_form_frame)
+edit_exam_entry = Entry(edit_form_frame)
+
+# Store all update entry widgets in a list.
+edit_entries = [
+    edit_name_entry,
+    edit_number_entry,
+    edit_cw1_entry,
+    edit_cw2_entry,
+    edit_cw3_entry,
+    edit_exam_entry
+]
+
+# Create each field label and corresponding input box.
+for row, field in enumerate(edit_fields):
+
+    # Display the field label.
+    field_label = Label(
+        edit_form_frame,
+        text = field + ":",
+        font = ("Times New Roman", 11, "bold"),
+        bg = "#23314F",
+        fg = "#FFFFFF",
+        width = 10,
+        anchor = "w",
+        padx = 5
+    )
+
+    field_label.grid(
+        row = row,
+        column = 0,
+        sticky = "nsew",
+        padx = 10,
+        pady = 5,
+        ipady = 4
+    )
+
+    # Configure and position the input field.
+    edit_entries[row].config(
+        font = ("Times New Roman", 11),
+        bg = "#FFFFFF",
+        fg = "#23314F",
+        relief = "solid",
+        bd = 1
+    )
+
+    edit_entries[row].grid(
+        row = row,
+        column = 1,
+        sticky = "nsew",
+        padx = 5,
+        pady = 5
+    )
+
+
+# ---- UPDATE FORM BUTTONS ---- #
+
+# Create the Update Student button.
+update_button = Button(
+    update_student_frame,
+    text = "Update Student",
+    font = ("Times New Roman", 12, "bold"),
+    command = update_student
+)
+update_button.place(x = 165, y = 430, width = 150, height = 35)
+
+# Create the back button.
+back_button = Button(
+    update_student_frame,
+    text = "Back to Search",
+    font = ("Times New Roman", 12, "bold"),
+    command = back_to_update_search
+)
+back_button.place(x = 335, y = 430, width = 150, height = 35)
+
+# ---- RUN THE APPLICATION ---- #
 main.mainloop()
