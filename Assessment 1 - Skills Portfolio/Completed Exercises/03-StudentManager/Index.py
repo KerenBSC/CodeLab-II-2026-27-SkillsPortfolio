@@ -1,73 +1,77 @@
 # ---- IMPORT REQUIRED LIBRARIES ---- #
+
 from tkinter import *
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import json
 import os
-from PIL import Image, ImageTk
 
 
 # ---- FILE PATHS ---- #
 
-# Set the base directory.
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-# Set the paths for the student records and images.
 txt_path = os.path.join(base_path, "..", "..", "A1 - Resources", "studentMarks.txt")
 json_path = os.path.join(base_path, "studentMarks.json")
-image_path = os.path.join(base_path, "LOGO.png")
-rankimage_path = os.path.join(base_path, "HighestRank.png")
+image_path = os.path.join(base_path, "image", "LOGO.png")
+
+
+# ---- COLOURS AND FONTS ---- #
+
+navy = "#23314F"
+cream = "#FFF1DB"
+white = "#FFFFFF"
+light_blue = "#E9EEF6"
+grey = "#68738A"
+
+heading_font = ("Times New Roman", 22, "bold")
+normal_font = ("Times New Roman", 11)
+button_font = ("Times New Roman", 11, "bold")
 
 
 # ---- STUDENT DATA MANAGEMENT ---- #
 
-# Store the student record selected for updating.
-selected_student = None
-selected_student_number = None
-
-# Convert the original TXT file into a JSON database.
+# Convert the original TXT records into JSON.
 def convert_to_json():
 
     students = []
 
-    # Read the student records from the TXT file.
     with open(txt_path, "r") as file:
         file.readline()
 
         for line in file:
             data = line.strip().split(",")
 
-            # Store each student's information in a dictionary.
-            student = {
-                "studentNumber": int(data[0]),
-                "name": data[1],
-                "coursework1": int(data[2]),
-                "coursework2": int(data[3]),
-                "coursework3": int(data[4]),
-                "examMark": int(data[5])
-            }
+            if len(data) == 6:
+                student = {
+                    "studentNumber": int(data[0]),
+                    "name": data[1],
+                    "coursework1": int(data[2]),
+                    "coursework2": int(data[3]),
+                    "coursework3": int(data[4]),
+                    "examMark": int(data[5])
+                }
 
-            students.append(student)
+                students.append(student)
 
-    # Save the student records in JSON format.
     with open(json_path, "w") as file:
         json.dump(students, file, indent = 4)
 
 
-# Convert the TXT file into JSON (run only once).
-# convert_to_json()
-
-# Load student records from the JSON database.
+# Load student records from JSON.
 def load_students():
+
+    if not os.path.exists(json_path):
+        convert_to_json()
 
     with open(json_path, "r") as file:
         students = json.load(file)
 
     return students
 
-# Save updated student records to both files.
+
+# Save changes to both the TXT and JSON files.
 def save_students(students):
 
-    # Update the original TXT file.
     with open(txt_path, "w") as file:
         file.write(str(len(students)) + "\n")
 
@@ -78,108 +82,13 @@ def save_students(students):
                 f"{student['coursework3']},{student['examMark']}\n"
             )
 
-    # Update the JSON database.
     with open(json_path, "w") as file:
         json.dump(students, file, indent = 4)
 
 
-# ---- ADD STUDENT RECORD ---- #
-
-# Validate the information entered for a new student.
-def validate_student(name, number, cw1, cw2, cw3, exam):
-
-    # Check that the student name is not empty.
-    if not name.strip():
-        messagebox.showerror("Invalid Input", "Please enter a student name.")
-        return False
-
-    # Prevent commas from interfering with the TXT file format.
-    if "," in name:
-        messagebox.showerror(
-            "Invalid Input",
-            "Student names cannot contain commas."
-        )
-        return False
-
-    # Check that the student number contains four digits.
-    if not number.isdigit() or not 1000 <= int(number) <= 9999:
-        messagebox.showerror("Invalid Input", "Student number must be between 1000 and 9999.")
-        return False
-
-    # Check that all marks are valid whole numbers.
-    try:
-        cw1 = int(cw1)
-        cw2 = int(cw2)
-        cw3 = int(cw3)
-        exam = int(exam)
-
-    except ValueError:
-        messagebox.showerror("Invalid Input", "Please enter valid whole-number marks.")
-        return False
-
-    # Check that coursework marks are between 0 and 20.
-    if not all(0 <= mark <= 20 for mark in [cw1, cw2, cw3]):
-        messagebox.showerror("Invalid Input", "Coursework marks must be between 0 and 20.")
-        return False
-
-    # Check that the exam mark is between 0 and 100.
-    if not 0 <= exam <= 100:
-        messagebox.showerror("Invalid Input", "Exam mark must be between 0 and 100.")
-        return False
-
-    return True
-
-# Add a new student record to the database.
-def add_student():
-
-    # Retrieve the information entered into the form.
-    name = name_entry.get().strip()
-    number = number_entry.get().strip()
-    cw1 = cw1_entry.get().strip()
-    cw2 = cw2_entry.get().strip()
-    cw3 = cw3_entry.get().strip()
-    exam = exam_entry.get().strip()
-
-    # Validate the entered information.
-    if not validate_student(name, number, cw1, cw2, cw3, exam):
-        return
-
-    # Load the existing student records.
-    students = load_students()
-
-    # Check whether the student number already exists.
-    for student in students:
-        if student["studentNumber"] == int(number):
-            messagebox.showerror("Duplicate Student", "This student number already exists.")
-            return
-
-    # Create the new student record.
-    new_student = {
-        "studentNumber": int(number),
-        "name": name,
-        "coursework1": int(cw1),
-        "coursework2": int(cw2),
-        "coursework3": int(cw3),
-        "examMark": int(exam)
-    }
-
-    # Add the new record to the student list.
-    students.append(new_student)
-
-    # Save the updated records to both files.
-    save_students(students)
-
-    # Display a confirmation message.
-    messagebox.showinfo("Success", "Student record added successfully.")
-
-    # Clear all input fields.
-    for entry in entries:
-        entry.delete(0, END)
-
-
 # ---- STUDENT RESULTS AND CALCULATIONS ---- #
 
-# Calculate a student's coursework total, percentage and grade.
+# Calculate coursework, total marks, percentage and grade.
 def calculate_results(student):
 
     coursework_total = (
@@ -189,10 +98,8 @@ def calculate_results(student):
     )
 
     total_mark = coursework_total + student["examMark"]
-
     percentage = (total_mark / 160) * 100
 
-    # Assign a grade according to the overall percentage.
     if percentage >= 70:
         grade = "A"
     elif percentage >= 60:
@@ -204,566 +111,45 @@ def calculate_results(student):
     else:
         grade = "F"
 
-    return coursework_total, percentage, grade
+    return coursework_total, total_mark, percentage, grade
 
-# Format an individual student's results for display.
-def display_student(student):
 
-    coursework_total, percentage, grade = calculate_results(student)
+# Check that the information entered is valid.
+def validate_student(name, number, cw1, cw2, cw3, exam):
 
-    result = (
-        f"Student Name: {student['name']}\n"
-        f"Student Number: {student['studentNumber']}\n"
-        f"Coursework Total: {coursework_total} / 60\n"
-        f"Exam Mark: {student['examMark']} / 100\n"
-        f"Overall Percentage: {round(percentage, 2)}%\n"
-        f"Grade: {grade}\n"
-        f"{'-' * 30}\n"
-    )
+    if name == "" or "," in name:
+        messagebox.showerror("Invalid Input", "Please enter a valid student name.")
+        return False
 
-    return result
+    if not number.isdigit() or not 1000 <= int(number) <= 9999:
+        messagebox.showerror("Invalid Input", "Student number must be between 1000 and 9999.")
+        return False
 
-# Retrieve an individual student's results using their number.
-def view_individual_student(student_number):
+    try:
+        cw1 = int(cw1)
+        cw2 = int(cw2)
+        cw3 = int(cw3)
+        exam = int(exam)
 
-    students = load_students()
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter whole-number marks.")
+        return False
 
-    # Search for the matching student number.
-    for student in students:
-        if student["studentNumber"] == student_number:
-            return display_student(student)
+    if not (0 <= cw1 <= 20 and 0 <= cw2 <= 20 and 0 <= cw3 <= 20):
+        messagebox.showerror("Invalid Input", "Each coursework mark must be between 0 and 20.")
+        return False
 
-    return "Student not found."
+    if not 0 <= exam <= 100:
+        messagebox.showerror("Invalid Input", "The exam mark must be between 0 and 100.")
+        return False
 
-# Retrieve the student with the highest overall mark.
-def show_highest_student():
+    return True
 
-    students = load_students()
 
-    highest_student = students[0]
+# Create a dictionary containing the student information.
+def student_data(name, number, cw1, cw2, cw3, exam):
 
-    # Compare the overall marks of all students.
-    for student in students:
-
-        student_total = calculate_results(student)[0] + student["examMark"]
-
-        highest_total = (
-            calculate_results(highest_student)[0] +
-            highest_student["examMark"]
-        )
-
-        if student_total > highest_total:
-            highest_student = student
-
-    return highest_student
-
-# Retrieve the student with the lowest overall mark.
-def show_lowest_student():
-
-    students = load_students()
-
-    lowest_student = students[0]
-
-    # Compare the overall marks of all students.
-    for student in students:
-
-        student_total = calculate_results(student)[0] + student["examMark"]
-
-        lowest_total = (
-            calculate_results(lowest_student)[0] +
-            lowest_student["examMark"]
-        )
-
-        if student_total < lowest_total:
-            lowest_student = student
-
-    return lowest_student
-
-
-# ---- STUDENT RECORDS AND SORTING ---- #
-
-# Refresh the student records table.
-def refresh_student_table(students = None):
-
-    # Remove the previous table contents.
-    for widget in body_frame.winfo_children():
-        widget.destroy()
-
-    # Load the latest records if no list is supplied.
-    if students is None:
-        students = load_students()
-
-    # Display the table headings.
-    for column, heading_text in enumerate(headings):
-
-        heading_label = Label(
-            body_frame,
-            text = heading_text,
-            font = ("Times New Roman", 10, "bold"),
-            bg = "#23314F",
-            fg = "#FFFFFF"
-        )
-
-        heading_label.grid(
-            row = 0,
-            column = column,
-            sticky = "nsew",
-            padx = 2,
-            pady = 2
-        )
-
-    total_percentage = 0
-
-    # Display each student's information.
-    for row, student in enumerate(students, start = 1):
-
-        coursework_total, percentage, grade = calculate_results(student)
-
-        total_percentage += percentage
-
-        details = [
-            student["name"],
-            student["studentNumber"],
-            f"{coursework_total} / 60",
-            f"{student['examMark']} / 100",
-            f"{percentage:.2f}%",
-            grade
-        ]
-
-        for column, detail in enumerate(details):
-
-            label = Label(
-                body_frame,
-                text = detail,
-                font = ("Times New Roman", 10),
-                bg = "#FFFFFF"
-            )
-
-            label.grid(
-                row = row,
-                column = column,
-                sticky = "nsew",
-                padx = 2,
-                pady = 2
-            )
-
-    # Calculate the class average.
-    number_of_students = len(students)
-
-    if number_of_students > 0:
-        average_percentage = total_percentage / number_of_students
-    else:
-        average_percentage = 0
-
-    # Display the class summary when viewing all records.
-    if record_action == "view":
-
-        summary_label.config(
-            text = f"Number of students: {number_of_students}     Average percentage: {average_percentage:.2f}%"
-        )
-        summary_label.place(x = 30, y = 100)
-
-    else:
-        summary_label.place_forget()
-
-# Delete a student record using their name and/or student number.
-def delete_student():
-
-    # Retrieve the search information.
-    name = delete_name_entry.get().strip()
-    number = delete_number_entry.get().strip()
-
-    # Check that at least one search field has been completed.
-    if name == "" and number == "":
-        messagebox.showerror(
-            "Missing Information",
-            "Please enter a student name or number."
-        )
-        return
-
-    # Check that the student number is valid, if provided.
-    if number != "" and not number.isdigit():
-        messagebox.showerror(
-            "Invalid Input",
-            "Student number must contain digits only."
-        )
-        return
-
-    # Load the existing student records.
-    students = load_students()
-
-    # Find records matching the entered information.
-    matching_students = []
-
-    for student in students:
-
-        name_matches = (
-            name == "" or student["name"].lower() == name.lower()
-        )
-
-        number_matches = (
-            number == "" or student["studentNumber"] == int(number)
-        )
-
-        if name_matches and number_matches:
-            matching_students.append(student)
-
-    # Check whether a matching student was found.
-    if len(matching_students) == 0:
-        messagebox.showerror(
-            "Student Not Found",
-            "No matching student record was found."
-        )
-        return
-
-    # Avoid deleting the wrong student if names are duplicated.
-    if len(matching_students) > 1:
-        messagebox.showerror(
-            "Multiple Matches",
-            "Multiple students have this name. Please enter their student number."
-        )
-        return
-
-    student = matching_students[0]
-
-    # Ensure at least one student record remains.
-    if len(students) == 1:
-        messagebox.showerror(
-            "Cannot Delete Student",
-            "At least one student record must remain."
-        )
-        return
-
-    # Ask for confirmation before deleting the record.
-    confirm = messagebox.askyesno(
-        "Confirm Deletion",
-        f"Are you sure you want to delete {student['name']} "
-        f"({student['studentNumber']})?"
-    )
-
-    if not confirm:
-        return
-
-    # Remove the student record.
-    students.remove(student)
-
-    # Save the updated records to both files.
-    save_students(students)
-
-    # Refresh the displayed student table.
-    refresh_student_table()
-
-    # Clear the search fields.
-    delete_name_entry.delete(0, END)
-    delete_number_entry.delete(0, END)
-
-    messagebox.showinfo(
-        "Success",
-        "Student record deleted successfully."
-    )
-
-# Sort student records according to the selected category and order.
-def apply_sort():
-
-    students = load_students()
-
-    # Sort alphabetically by student name.
-    if sort_by_var.get() == "Name":
-        students.sort(key = lambda student: student["name"].lower())
-
-    # Sort numerically by student number.
-    elif sort_by_var.get() == "Student Number":
-        students.sort(key = lambda student: student["studentNumber"])
-
-    # Sort according to coursework total.
-    elif sort_by_var.get() == "Coursework Total":
-        students.sort(key = lambda student: calculate_results(student)[0])
-
-    # Sort according to exam mark.
-    elif sort_by_var.get() == "Exam Mark":
-        students.sort(key = lambda student: student["examMark"])
-
-    # Sort according to overall percentage.
-    elif sort_by_var.get() == "Overall Percentage":
-        students.sort(key = lambda student: calculate_results(student)[1])
-
-    # Sort alphabetically by grade.
-    elif sort_by_var.get() == "Grade":
-        students.sort(key = lambda student: calculate_results(student)[2])
-
-    # Reverse the records if descending order is selected.
-    if sort_order_var.get() == "Descending":
-        students.reverse()
-
-    # Refresh the table using the sorted records.
-    refresh_student_table(students)
-
-# Reset the sorting options and restore the original record order.
-def reset_sort():
-
-    sort_by_var.set("Name")
-    sort_order_var.set("Ascending")
-
-    refresh_student_table()
-
-
-# ---- HIGHEST AND LOWEST STUDENT PAGES ---- #
-
-# Refresh the highest overall mark page.
-def refresh_highest():
-
-    highest_student = show_highest_student()
-
-    coursework_total, percentage, grade = calculate_results(highest_student)
-
-    details = [
-        highest_student["name"],
-        highest_student["studentNumber"],
-        f"{coursework_total} / 60",
-        f"{highest_student['examMark']} / 100",
-        f"{percentage:.2f}%",
-        grade
-    ]
-
-    # Update the displayed student information.
-    for row, detail in enumerate(details):
-        highest_value_labels[row].config(text = detail)
-
-# Refresh the lowest overall mark page.
-def refresh_lowest():
-
-    lowest_student = show_lowest_student()
-
-    coursework_total, percentage, grade = calculate_results(lowest_student)
-
-    details = [
-        lowest_student["name"],
-        lowest_student["studentNumber"],
-        f"{coursework_total} / 60",
-        f"{lowest_student['examMark']} / 100",
-        f"{percentage:.2f}%",
-        grade
-    ]
-
-    # Update the displayed student information.
-    for row, detail in enumerate(details):
-        lowest_value_labels[row].config(text = detail)
-
-
-# ---- PAGE NAVIGATION AND SEARCH FUNCTIONS ---- #
-
-# Open the student records page for the selected action.
-def open_records(action):
-
-    global record_action, selected_student, selected_student_number
-
-    record_action = action
-
-    # Hide all action-specific controls.
-    sort_frame.place_forget()
-    delete_frame.place_forget()
-    update_frame.place_forget()
-    update_student_frame.place_forget()
-
-    # Show the controls for the selected action.
-    if record_action == "sort":
-        sort_frame.place(x = 25, y = 90, width = 600, height = 45)
-
-    elif record_action == "delete":
-        delete_frame.place(x = 25, y = 90, width = 600, height = 45)
-
-    elif record_action == "update":
-
-        update_frame.place(x = 25, y = 90, width = 600, height = 45)
-
-        # Clear the previous student selection.
-        selected_student = None
-        selected_student_number = None
-
-        update_name_entry.delete(0, END)
-        update_number_entry.delete(0, END)
-
-    # Refresh the records before opening the page.
-    refresh_student_table()
-
-    all_students_frame.place(x = 0, y = 0)
-
-# Open the highest overall mark page.
-def open_highest():
-
-    refresh_highest()
-    highest_frame.place(x = 0, y = 0)
-
-# Open the lowest overall mark page.
-def open_lowest():
-
-    refresh_lowest()
-    lowest_frame.place(x = 0, y = 0)
-
-# Search for and display an individual student's results.
-def search_student():
-
-    # Retrieve the student number entered by the user.
-    student_number = student_number_entry.get().strip()
-
-    # Check whether the entered number is valid.
-    if student_number.isdigit():
-
-        result = view_individual_student(int(student_number))
-
-        result_label.config(text = result)
-
-    else:
-        result_label.config(text = "Please enter a valid student number.")
-
-    # Clear the input field.
-    student_number_entry.delete(0, END)
-
-# Return to the student search page.
-def back_to_update_search():
-
-    update_student_frame.place_forget()
-    all_students_frame.place(x = 0, y = 0)
-
-# Find a student record to update.
-def find_student_to_update():
-
-    global selected_student, selected_student_number
-
-    # Retrieve the search information.
-    name = update_name_entry.get().strip()
-    number = update_number_entry.get().strip()
-
-    # Check that at least one search field has been completed.
-    if name == "" and number == "":
-        messagebox.showerror(
-            "Missing Information",
-            "Please enter a student name or number."
-        )
-        return
-
-    # Check that the student number contains digits only.
-    if number != "" and not number.isdigit():
-        messagebox.showerror(
-            "Invalid Input",
-            "Student number must contain digits only."
-        )
-        return
-
-    # Load the existing student records.
-    students = load_students()
-
-    # Find records matching the entered information.
-    matching_students = []
-
-    for student in students:
-
-        name_matches = (
-            name == "" or student["name"].lower() == name.lower()
-        )
-
-        number_matches = (
-            number == "" or student["studentNumber"] == int(number)
-        )
-
-        if name_matches and number_matches:
-            matching_students.append(student)
-
-    # Check whether a matching student was found.
-    if len(matching_students) == 0:
-        messagebox.showerror(
-            "Student Not Found",
-            "No matching student record was found."
-        )
-        return
-
-    # Prevent updating the wrong student if names are duplicated.
-    if len(matching_students) > 1:
-        messagebox.showerror(
-            "Multiple Matches",
-            "Multiple students have this name. Please enter their student number."
-        )
-        return
-
-    # Store the selected student's record and original number.
-    selected_student = matching_students[0]
-    selected_student_number = selected_student["studentNumber"]
-
-    # Fill the update form with the student's existing information.
-    edit_name_entry.delete(0, END)
-    edit_name_entry.insert(0, selected_student["name"])
-
-    edit_number_entry.delete(0, END)
-    edit_number_entry.insert(0, str(selected_student["studentNumber"]))
-
-    edit_cw1_entry.delete(0, END)
-    edit_cw1_entry.insert(0, str(selected_student["coursework1"]))
-
-    edit_cw2_entry.delete(0, END)
-    edit_cw2_entry.insert(0, str(selected_student["coursework2"]))
-
-    edit_cw3_entry.delete(0, END)
-    edit_cw3_entry.insert(0, str(selected_student["coursework3"]))
-
-    edit_exam_entry.delete(0, END)
-    edit_exam_entry.insert(0, str(selected_student["examMark"]))
-
-    # Hide the search page and open the update form.
-    all_students_frame.place_forget()
-    update_student_frame.place(x = 0, y = 0)
-
-# Update the selected student's record.
-def update_student():
-
-    global selected_student, selected_student_number
-
-    # Check that a student has been selected.
-    if selected_student is None:
-        messagebox.showerror(
-            "No Student Selected",
-            "Please find a student before updating their record."
-        )
-        return
-
-    # Retrieve the information entered into the update form.
-    name = edit_name_entry.get().strip()
-    number = edit_number_entry.get().strip()
-    cw1 = edit_cw1_entry.get().strip()
-    cw2 = edit_cw2_entry.get().strip()
-    cw3 = edit_cw3_entry.get().strip()
-    exam = edit_exam_entry.get().strip()
-
-    # Validate the entered information.
-    if not validate_student(name, number, cw1, cw2, cw3, exam):
-        return
-
-    # Load the latest student records.
-    students = load_students()
-
-    # Check whether the new student number already exists.
-    for student in students:
-
-        if (
-            student["studentNumber"] == int(number)
-            and student["studentNumber"] != selected_student_number
-        ):
-            messagebox.showerror(
-                "Duplicate Student",
-                "This student number already exists."
-            )
-            return
-
-    # Ask the user to confirm the changes.
-    confirm = messagebox.askyesno(
-        "Confirm Update",
-        f"Are you sure you want to update the record for {selected_student['name']}?"
-    )
-
-    if not confirm:
-        return
-
-    # Create the updated student record.
-    updated_student = {
+    return {
         "studentNumber": int(number),
         "name": name,
         "coursework1": int(cw1),
@@ -772,983 +158,1082 @@ def update_student():
         "examMark": int(exam)
     }
 
-    # Find the original record and replace it.
-    student_found = False
 
-    for index, student in enumerate(students):
-
-        if student["studentNumber"] == selected_student_number:
-            students[index] = updated_student
-            student_found = True
-            break
-
-    # Stop if the original student record could not be found.
-    if not student_found:
-        messagebox.showerror(
-            "Student Not Found",
-            "The original student record could not be found."
-        )
-        return
-
-    # Save the updated records to both files.
-    save_students(students)
-
-    # Update the selected student information.
-    selected_student = updated_student
-    selected_student_number = updated_student["studentNumber"]
-
-    # Refresh the student records table.
-    refresh_student_table()
-
-    messagebox.showinfo(
-        "Success",
-        "Student record updated successfully."
-    )
-
-# Return to the main menu and clear the previous search.
-def back_to_individual_menu():
-
-    individual_frame.place_forget()
-
-    result_label.config(text = "")
-    student_number_entry.delete(0, END)
-
-
-# ---- MAIN APPLICATION WINDOW ---- #
+# ---- MAIN WINDOW ---- #
 
 main = Tk()
-
 main.title("Student Manager")
-main.geometry("650x500")
-main.configure(bg = "#FFF1DB")
-main.resizable(False, False)
+
+# Set the window size and position.
+window_width = 1000
+window_height = 600
+
+screen_width = main.winfo_screenwidth()
+screen_height = main.winfo_screenheight()
+
+x_position = (screen_width - window_width) // 2
+y_position = (screen_height - window_height) // 2
+
+main.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+main.minsize(900, 600)
+main.configure(bg = cream)
+
+# Set the application window icon using LOGO.png.
+if os.path.exists(image_path):
+    try:
+        window_icon = PhotoImage(file = image_path)
+        main.iconphoto(True, window_icon)
+    except:
+        window_icon = None
 
 
-# ---- APPLICATION HEADER ---- #
+# ---- MAIN DASHBOARD LAYOUT ---- #
 
-# Create the header frame.
-header = Frame(
-    main,
-    bg = "#23314F",
-    width = 650,
-    height = 130
+# Create the header.
+header = Frame(main, bg = navy, height = 100)
+header.pack(side = TOP, fill = X)
+header.pack_propagate(False)
+
+# Display the logo in the header.
+logo_label = Label(
+    header,
+    text = "SM",
+    font = ("Times New Roman", 25, "bold"),
+    bg = white,
+    fg = navy,
+    width = 3,
+    height = 1
 )
-header.place(x = 0, y = 0)
+logo_label.place(x = 22, y = 19)
 
-# Load and resize the application logo.
-pic1 = Image.open(image_path)
-pic2 = pic1.resize((90, 90))
-
-logo = ImageTk.PhotoImage(pic2)
-
-# Display the application logo.
-imglabel = Label(
-    main,
-    image = logo,
-    bg = "#FFF1DB"
-)
-imglabel.place(x = 17, y = 17)
+# Load the logo image if available.
+if os.path.exists(image_path):
+    try:
+        logo_image = PhotoImage(file = image_path)
+        logo_label.config(image = logo_image, text = "")
+        logo_label.image = logo_image
+        logo_label.place(x = 18, y = 10, width = 75, height = 75)
+    except:
+        pass
 
 # Display the application title.
 title_label = Label(
     header,
     text = "STUDENT MANAGER",
-    bg = "#23314F",
-    fg = "#FFFFFF",
-    font = ("Times New Roman", 36, "bold", "italic")
+    font = ("Times New Roman", 30, "bold"),
+    bg = navy,
+    fg = white
 )
-title_label.place(x = 135, y = 35)
+title_label.place(x = 115, y = 27)
 
-
-# ---- MAIN MENU ---- #
-
-# Store the current action for the student records page.
-record_action = "view"
-
-# Display the main menu heading.
-main_heading = Label(
-    main,
-    text = "MAIN MENU",
-    font = ("Times New Roman", 16, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
+subtitle_label = Label(
+    header,
+    text = "STUDENT RECORDS AND RESULTS",
+    font = ("Arial", 9, "bold"),
+    bg = navy,
+    fg = "#D8DFEA"
 )
-main_heading.place(x = 20, y = 155, width = 280)
-
-# Display the extensions heading.
-extension_heading = Label(
-    main,
-    text = "EXTENSIONS",
-    font = ("Times New Roman", 16, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-extension_heading.place(x = 350, y = 155, width = 280)
-
-# Create the vertical separator.
-separator = Frame(
-    main,
-    bg = "#BDBDBD",
-    width = 2,
-    height = 330
-)
-separator.place(x = 325, y = 150)
+subtitle_label.place(relx = 1.0, x = -25, y = 43, anchor = "e")
 
 
-# ---- MAIN MENU BUTTONS ---- #
+# Create the main area below the header.
+main_area = Frame(main, bg = cream)
+main_area.pack(fill = BOTH, expand = True, padx = 15, pady = 15)
 
-# Menu Item 1: View all student records.
-btn_all = Button(
-    main,
-    text = "All Student Records",
-    font = ("Times New Roman", 13, "bold"),
-    command = lambda: open_records("view")
-)
-btn_all.place(x = 27, y = 200, width = 265, height = 55)
+# Create the sidebar.
+sidebar = Frame(main_area, bg = navy, width = 205)
+sidebar.pack(side = LEFT, fill = Y, padx = (0, 15))
+sidebar.pack_propagate(False)
 
-# Menu Item 2: View an individual student record.
-btn_individual = Button(
-    main,
-    text = "Individual Student Records",
-    font = ("Times New Roman", 13, "bold"),
-    command = lambda: individual_frame.place(x = 0, y = 0)
-)
-btn_individual.place(x = 27, y = 265, width = 265, height = 55)
-
-# Menu Item 3: Show the highest overall mark.
-btn_highest = Button(
-    main,
-    text = "Highest Overall Mark",
-    font = ("Times New Roman", 13, "bold"),
-    command = open_highest
-)
-btn_highest.place(x = 27, y = 330, width = 265, height = 55)
-
-# Menu Item 4: Show the lowest overall mark.
-btn_lowest = Button(
-    main,
-    text = "Lowest Overall Mark",
-    font = ("Times New Roman", 13, "bold"),
-    command = open_lowest
-)
-btn_lowest.place(x = 27, y = 395, width = 265, height = 55)
+# Create the content area.
+content_frame = Frame(main_area, bg = white)
+content_frame.pack(side = LEFT, fill = BOTH, expand = True)
 
 
-# ---- EXTENSION BUTTONS ---- #
+# ---- PAGE DISPLAY FUNCTIONS ---- #
 
-# Menu Item 5: Sort student records.
-btn_sort = Button(
-    main,
-    text = "Sort Student Records",
-    font = ("Times New Roman", 13, "bold"),
-    command = lambda: open_records("sort")
-)
-btn_sort.place(x = 357, y = 200, width = 265, height = 55)
+# Clear the previous page content.
+def clear_content():
 
-# Menu Item 6: Add a student record.
-btn_add = Button(
-    main,
-    text = "Add Student Record",
-    font = ("Times New Roman", 13, "bold"),
-    command = lambda: add_frame.place(x = 0, y = 0)
-)
-btn_add.place(x = 357, y = 265, width = 265, height = 55)
-
-# Menu Item 7: Delete a student record.
-btn_delete = Button(
-    main,
-    text = "Delete Student Record",
-    font = ("Times New Roman", 13, "bold"),
-    command = lambda: open_records("delete")
-)
-btn_delete.place(x = 357, y = 330, width = 265, height = 55)
-
-# Menu Item 8: Update a student record.
-btn_update = Button(
-    main,
-    text = "Update Student Record",
-    font = ("Times New Roman", 13, "bold"),
-    command = lambda: open_records("update")
-)
-btn_update.place(x = 357, y = 395, width = 265, height = 55)
+    for widget in content_frame.winfo_children():
+        widget.destroy()
 
 
-# ---- ALL STUDENT RECORDS PAGE ---- #
+# Display a page heading and optional description.
+def page_heading(title, description = ""):
 
-all_students_frame = Frame(
-    main,
-    bg = "#FFF1DB",
-    width = 650,
-    height = 500
-)
+    Label(
+        content_frame,
+        text = title,
+        font = heading_font,
+        bg = white,
+        fg = navy
+    ).pack(anchor = "w", padx = 25, pady = (22, 2))
 
-# Display the page heading.
-heading = Label(
-    all_students_frame,
-    text = "ALL STUDENT RECORDS",
-    font = ("Times New Roman", 22, "bold"),
-    bg = "#23314F",
-    fg = "#FFFFFF"
-)
-heading.place(x = 25, y = 20, width = 600, height = 60)
-
-
-# ---- SORTING CONTROLS ---- #
-
-sort_frame = Frame(
-    all_students_frame,
-    bg = "#FFF1DB"
-)
-
-# Create the delete search frame.
-delete_frame = Frame(all_students_frame, bg = "#FFF1DB")
-
-# Create the update search frame.
-update_frame = Frame(
-    all_students_frame,
-    bg = "#FFF1DB"
-)
-
-# Display the student name label.
-update_name_label = Label(
-    update_frame,
-    text = "Name:",
-    font = ("Times New Roman", 11, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-update_name_label.place(x = 0, y = 10)
-
-# Create the student name input field.
-update_name_entry = Entry(
-    update_frame,
-    font = ("Times New Roman", 10)
-)
-update_name_entry.place(x = 50, y = 5, width = 140, height = 30)
-
-# Display the student number label.
-update_number_label = Label(
-    update_frame,
-    text = "Number:",
-    font = ("Times New Roman", 11, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-update_number_label.place(x = 205, y = 10)
-
-# Create the student number input field.
-update_number_entry = Entry(
-    update_frame,
-    font = ("Times New Roman", 10)
-)
-update_number_entry.place(x = 270, y = 5, width = 120, height = 30)
-
-# Add the button to search for a student.
-find_student_button = Button(
-    update_frame,
-    text = "Find Student",
-    font = ("Times New Roman", 10, "bold"),
-    command = find_student_to_update
-)
-find_student_button.place(x = 465, y = 8)
-
-# Display the student name label.
-name_label = Label(
-    delete_frame,
-    text = "Name:",
-    font = ("Times New Roman", 11, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-name_label.place(x = 0, y = 10)
-
-# Create the student name input field.
-delete_name_entry = Entry(
-    delete_frame,
-    font = ("Times New Roman", 10)
-)
-delete_name_entry.place(x = 50, y = 5, width = 140, height = 30)
-
-# Display the student number label.
-number_label = Label(
-    delete_frame,
-    text = "Number:",
-    font = ("Times New Roman", 11, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-number_label.place(x = 205, y = 10)
-
-# Create the student number input field.
-delete_number_entry = Entry(
-    delete_frame,
-    font = ("Times New Roman", 10)
-)
-delete_number_entry.place(x = 270, y = 5, width = 120, height = 30)
-
-# Create the Delete button.
-delete_button = Button(
-    delete_frame,
-    text = "Delete Student",
-    font = ("Times New Roman", 10, "bold"),
-    command = delete_student
-)
-delete_button.place(x = 420, y = 5, width = 150, height = 30)
-
-# Store the selected sorting category.
-sort_by_var = StringVar()
-sort_by_var.set("Name")
-
-# Store the selected sorting order.
-sort_order_var = StringVar()
-sort_order_var.set("Ascending")
-
-# Display the category label.
-sort_label = Label(
-    sort_frame,
-    text = "Sort by:",
-    font = ("Times New Roman", 11, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-sort_label.place(x = 0, y = 8)
-
-# Create the category dropdown.
-sort_menu = OptionMenu(
-    sort_frame,
-    sort_by_var,
-    "Name",
-    "Student Number",
-    "Coursework Total",
-    "Exam Mark",
-    "Overall Percentage",
-    "Grade"
-)
-sort_menu.config(font = ("Times New Roman", 10))
-sort_menu.place(x = 65, y = 3, width = 170, height = 35)
-
-# Display the order label.
-order_label = Label(
-    sort_frame,
-    text = "Order:",
-    font = ("Times New Roman", 11, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-order_label.place(x = 250, y = 8)
-
-# Create the order dropdown.
-order_menu = OptionMenu(
-    sort_frame,
-    sort_order_var,
-    "Ascending",
-    "Descending"
-)
-order_menu.config(font = ("Times New Roman", 10))
-order_menu.place(x = 305, y = 3, width = 130, height = 35)
-
-# Create the Apply button.
-apply_button = Button(
-    sort_frame,
-    text = "Apply",
-    font = ("Times New Roman", 10, "bold"),
-    command = apply_sort
-)
-apply_button.place(x = 445, y = 3, width = 75, height = 33)
-
-# Create the Reset button.
-reset_button = Button(
-    sort_frame,
-    text = "Reset",
-    font = ("Times New Roman", 10, "bold"),
-    command = reset_sort
-)
-reset_button.place(x = 530, y = 3, width = 70, height = 33)
+    if description != "":
+        Label(
+            content_frame,
+            text = description,
+            font = ("Arial", 10),
+            bg = white,
+            fg = grey
+        ).pack(anchor = "w", padx = 27, pady = (0, 15))
 
 
-# ---- STUDENT TABLE ---- #
+# Create a sidebar navigation button.
+def sidebar_button(text, command, parent = None, spacing = 3):
 
-# Create the table body area.
-body_frame = Frame(
-    all_students_frame,
-    bg = "#FFFFFF"
-)
-body_frame.place(x = 25, y = 135, width = 600, height = 290)
+    if parent is None:
+        parent = sidebar
 
-# Allow the six table columns to expand evenly.
-for column in range(6):
-    body_frame.grid_columnconfigure(column, weight = 1)
+    button = Button(
+        parent,
+        text = text,
+        font = button_font,
+        bg = navy,
+        fg = white,
+        activebackground = "#405477",
+        activeforeground = white,
+        relief = "flat",
+        anchor = "w",
+        padx = 20,
+        command = command
+    )
 
-# Store the student table headings.
-headings = ["Name", "Number", "Coursework", "Exam", "Percentage", "Grade"]
-
-
-# ---- CLASS SUMMARY ---- #
-
-summary_label = Label(
-    all_students_frame,
-    text = "",
-    font = ("Times New Roman", 13, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-summary_label.place(x = 25, y = 95)
-
-# Display the student records when the application starts.
-refresh_student_table()
-
-# Create the back button.
-back_button = Button(
-    all_students_frame,
-    text = "Back to Menu",
-    font = ("Times New Roman", 12, "bold"),
-    command = all_students_frame.place_forget
-)
-back_button.place(x = 250, y = 445, width = 150, height = 35)
+    button.pack(fill = X, padx = 8, pady = spacing, ipady = 7)
 
 
-# ---- INDIVIDUAL STUDENT RECORDS PAGE ---- #
+# Expand or collapse a sidebar dropdown menu.
+def toggle_menu(menu_frame, heading_button, heading_text, next_heading = None):
 
-individual_frame = Frame(
-    main,
-    bg = "#FFF1DB",
-    width = 650,
-    height = 500
-)
+    if menu_frame.winfo_ismapped():
+        menu_frame.pack_forget()
+        heading_button.config(text = heading_text + "   +")
 
-# Display the page heading.
-heading = Label(
-    individual_frame,
-    text = "INDIVIDUAL STUDENT RECORDS",
-    font = ("Times New Roman", 22, "bold"),
-    bg = "#23314F",
-    fg = "#FFFFFF"
-)
-heading.place(x = 25, y = 20, width = 600, height = 60)
+    else:
+        if next_heading is None:
+            menu_frame.pack(fill = X)
+        else:
+            menu_frame.pack(fill = X, before = next_heading)
 
-# Ask the user to enter a student number.
-instruction_label = Label(
-    individual_frame,
-    text = "Enter Student Number:",
-    font = ("Times New Roman", 14, "bold"),
-    bg = "#FFF1DB",
-    fg = "#23314F"
-)
-instruction_label.place(x = 120, y = 115)
+        heading_button.config(text = heading_text + "   -")
 
-# Create the student number input field.
-student_number_entry = Entry(
-    individual_frame,
-    font = ("Times New Roman", 14),
-    justify = "center"
-)
-student_number_entry.place(x = 350, y = 115, width = 180, height = 30)
 
-# Create the area for displaying student results.
-result_label = Label(
-    individual_frame,
-    text = "",
-    font = ("Times New Roman", 13),
-    bg = "#FFFFFF",
-    fg = "#23314F",
-    justify = "left",
+# Display student records in a table.
+def display_table(students, show_summary = False, parent = None):
+
+    if parent is None:
+        parent = content_frame
+
+    table_area = Frame(parent, bg = white)
+    table_area.pack(fill = BOTH, expand = True, padx = 25, pady = 10)
+
+    columns = ("name", "number", "coursework", "exam", "percentage", "grade")
+
+    table = ttk.Treeview(
+        table_area,
+        columns = columns,
+        show = "headings",
+        height = 15
+    )
+
+    # Set the table headings.
+    table.heading("name", text = "Student Name")
+    table.heading("number", text = "Student Number")
+    table.heading("coursework", text = "Coursework")
+    table.heading("exam", text = "Exam")
+    table.heading("percentage", text = "Percentage")
+    table.heading("grade", text = "Grade")
+
+    # Adjust the column widths.
+    table.column("name", width = 150, minwidth = 120, anchor = "w", stretch = True)
+    table.column("number", width = 110, minwidth = 95, anchor = "center", stretch = True)
+    table.column("coursework", width = 100, minwidth = 85, anchor = "center", stretch = True)
+    table.column("exam", width = 75, minwidth = 65, anchor = "center", stretch = True)
+    table.column("percentage", width = 95, minwidth = 80, anchor = "center", stretch = True)
+    table.column("grade", width = 55, minwidth = 45, anchor = "center", stretch = True)
+
+    # Add a scrollbar to the table.
+    scrollbar = ttk.Scrollbar(table_area, orient = VERTICAL, command = table.yview)
+    table.configure(yscrollcommand = scrollbar.set)
+
+    table.pack(side = LEFT, fill = BOTH, expand = True)
+    scrollbar.pack(side = RIGHT, fill = Y)
+
+    total_percentage = 0
+
+    # Insert each student's results.
+    for student in students:
+
+        coursework, total, percentage, grade = calculate_results(student)
+        total_percentage += percentage
+
+        table.insert(
+            "",
+            END,
+            values = (
+                f" {student['name']} ",
+                f" {student['studentNumber']} ",
+                f" {coursework} / 60 ",
+                f" {student['examMark']} / 100 ",
+                f" {percentage:.2f}% ",
+                f" {grade} "
+            )
+        )
+
+    # Display the class summary when requested.
+    if show_summary:
+
+        number_of_students = len(students)
+
+        if number_of_students > 0:
+            average_percentage = total_percentage / number_of_students
+        else:
+            average_percentage = 0
+
+        summary = Frame(parent, bg = light_blue)
+        summary.pack(fill = X, padx = 25, pady = (0, 20))
+
+        Label(
+            summary,
+            text = f"TOTAL STUDENTS: {number_of_students}",
+            font = ("Arial", 10, "bold"),
+            bg = light_blue,
+            fg = navy
+        ).pack(side = LEFT, padx = 18, pady = 14)
+
+        Label(
+            summary,
+            text = f"CLASS AVERAGE: {average_percentage:.2f}%",
+            font = ("Arial", 10, "bold"),
+            bg = light_blue,
+            fg = navy
+        ).pack(side = LEFT, padx = 18, pady = 14)
+
+
+# Display all the information for one student.
+def display_student_details(student):
+
+    coursework, total, percentage, grade = calculate_results(student)
+
+    details = [
+        ("Student Name", student["name"]),
+        ("Student Number", student["studentNumber"]),
+        ("Coursework Total", f"{coursework} / 60"),
+        ("Exam Mark", f"{student['examMark']} / 100"),
+        ("Overall Mark", f"{total} / 160"),
+        ("Overall Percentage", f"{percentage:.2f}%"),
+        ("Grade", grade)
+    ]
+
+    details_frame = Frame(content_frame, bg = light_blue)
+    details_frame.pack(fill = X, padx = 30, pady = 20)
+
+    for row, detail in enumerate(details):
+
+        # Add extra space around the first and last rows.
+        if row == 0:
+            row_padding = (22, 10)
+        elif row == len(details) - 1:
+            row_padding = (10, 22)
+        else:
+            row_padding = 10
+
+        Label(
+            details_frame,
+            text = detail[0],
+            font = ("Arial", 10, "bold"),
+            bg = light_blue,
+            fg = navy,
+            anchor = "w"
+        ).grid(row = row, column = 0, sticky = "w", padx = 20, pady = row_padding)
+
+        Label(
+            details_frame,
+            text = detail[1],
+            font = ("Arial", 10),
+            bg = light_blue,
+            fg = navy,
+            anchor = "w"
+        ).grid(row = row, column = 1, sticky = "w", padx = 35, pady = row_padding)
+
+
+# ---- DASHBOARD HOME ---- #
+
+def show_dashboard():
+
+    clear_content()
+    students = load_students()
+
+    page_heading(
+        "Welcome to Student Manager",
+        "Manage student records and analyse class results."
+    )
+
+    total_students = len(students)
+
+    # Calculate the class average and highest and lowest results.
+    if total_students > 0:
+        percentages = [calculate_results(student)[2] for student in students]
+        average = sum(percentages) / total_students
+
+        highest = max(students, key = lambda student: calculate_results(student)[1])
+        lowest = min(students, key = lambda student: calculate_results(student)[1])
+
+    else:
+        average = 0
+        highest = None
+        lowest = None
+
+    # Display the dashboard summary cards.
+    cards = Frame(content_frame, bg = white)
+    cards.pack(fill = X, padx = 25, pady = 25)
+
+    card_details = [
+        ("TOTAL STUDENTS", str(total_students)),
+        ("CLASS AVERAGE", f"{average:.2f}%"),
+        ("HIGHEST GRADE", calculate_results(highest)[3] if highest else "-")
+    ]
+
+    for title, value in card_details:
+
+        card = Frame(cards, bg = light_blue, padx = 20, pady = 18)
+        card.pack(side = LEFT, fill = BOTH, expand = True, padx = 7)
+
+        Label(
+            card,
+            text = title,
+            font = ("Arial", 9, "bold"),
+            bg = light_blue,
+            fg = grey
+        ).pack(anchor = "w")
+
+        Label(
+            card,
+            text = value,
+            font = ("Arial", 23, "bold"),
+            bg = light_blue,
+            fg = navy
+        ).pack(anchor = "w", pady = (8, 0))
+
+    Label(
+        content_frame,
+        text = "QUICK OVERVIEW",
+        font = ("Arial", 12, "bold"),
+        bg = white,
+        fg = navy
+    ).pack(anchor = "w", padx = 32, pady = (20, 5))
+
+    # Show the students with the highest and lowest marks.
+    if highest is not None:
+
+        Label(
+            content_frame,
+            text = f"Highest overall mark: {highest['name']}  |  {calculate_results(highest)[2]:.2f}%",
+            font = normal_font,
+            bg = white,
+            fg = navy
+        ).pack(anchor = "w", padx = 32, pady = 7)
+
+        Label(
+            content_frame,
+            text = f"Lowest overall mark: {lowest['name']}  |  {calculate_results(lowest)[2]:.2f}%",
+            font = normal_font,
+            bg = white,
+            fg = navy
+        ).pack(anchor = "w", padx = 32, pady = 7)
+
+    Label(
+        content_frame,
+        text = "Choose an option from the sidebar to get started.",
+        font = ("Arial", 10, "italic"),
+        bg = white,
+        fg = grey
+    ).pack(anchor = "w", padx = 32, pady = 25)
+
+
+# ---- 1. VIEW ALL STUDENT RECORDS ---- #
+
+def show_all_records():
+
+    clear_content()
+    page_heading("All Student Records", "A complete overview of the class.")
+    display_table(load_students(), True)
+
+
+# ---- 2. VIEW AN INDIVIDUAL STUDENT ---- #
+
+def show_individual():
+
+    clear_content()
+
+    page_heading(
+        "Individual Student Record",
+        "Search using a student's four-digit number."
+    )
+
+    search_area = Frame(content_frame, bg = light_blue)
+    search_area.pack(fill = X, padx = 30, pady = 20)
+
+    Label(
+        search_area,
+        text = "Student Number:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).pack(side = LEFT, padx = (18, 8), pady = 18)
+
+    number_entry = Entry(search_area, font = normal_font, width = 18)
+    number_entry.pack(side = LEFT, pady = 18)
+
+    # Find and display the matching student.
+    def search():
+
+        number = number_entry.get().strip()
+
+        if not number.isdigit():
+            messagebox.showerror("Invalid Input", "Please enter a valid student number.")
+            return
+
+        students = load_students()
+
+        for student in students:
+            if student["studentNumber"] == int(number):
+                clear_content()
+                page_heading("Student Record", "Individual student results.")
+                display_student_details(student)
+                return
+
+        messagebox.showerror("Not Found", "No student with that number was found.")
+
+    Button(
+        search_area,
+        text = "Search",
+        font = button_font,
+        bg = navy,
+        fg = white,
+        command = search,
+        relief = "flat",
+        padx = 18
+    ).pack(side = LEFT, padx = 12, pady = 15)
+
+
+# ---- 3. HIGHEST OVERALL MARK ---- #
+
+def show_highest():
+
+    clear_content()
+    students = load_students()
+
+    page_heading("Highest Overall Mark", "The student with the highest total score.")
+
+    if len(students) == 0:
+        Label(
+            content_frame,
+            text = "No student records available.",
+            bg = white
+        ).pack(pady = 30)
+        return
+
+    highest = max(students, key = lambda student: calculate_results(student)[1])
+    display_student_details(highest)
+
+
+# ---- 4. LOWEST OVERALL MARK ---- #
+
+def show_lowest():
+
+    clear_content()
+    students = load_students()
+
+    page_heading("Lowest Overall Mark", "The student with the lowest total score.")
+
+    if len(students) == 0:
+        Label(
+            content_frame,
+            text = "No student records available.",
+            bg = white
+        ).pack(pady = 30)
+        return
+
+    lowest = min(students, key = lambda student: calculate_results(student)[1])
+    display_student_details(lowest)
+
+
+# ---- 5. SORT STUDENT RECORDS ---- #
+
+def show_sort():
+
+    clear_content()
+    page_heading("Sort Student Records", "Choose a category and sorting order.")
+
+    options = Frame(content_frame, bg = light_blue)
+    options.pack(fill = X, padx = 30, pady = 20)
+
+    Label(
+        options,
+        text = "Sort by:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).grid(row = 0, column = 0, padx = 15, pady = 18)
+
+    sort_by = StringVar(value = "Name")
+
+    sort_menu = OptionMenu(
+        options,
+        sort_by,
+        "Name",
+        "Student Number",
+        "Coursework Total",
+        "Exam Mark",
+        "Overall Percentage",
+        "Grade"
+    )
+    sort_menu.grid(row = 0, column = 1, padx = 10, pady = 15)
+
+    Label(
+        options,
+        text = "Order:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).grid(row = 0, column = 2, padx = 15, pady = 18)
+
+    sort_order = StringVar(value = "Ascending")
+
+    order_menu = OptionMenu(
+        options,
+        sort_order,
+        "Ascending",
+        "Descending"
+    )
+    order_menu.grid(row = 0, column = 3, padx = 10, pady = 15)
+
+    # Keep the sorting controls visible when the results refresh.
+    results_heading = Label(
+        content_frame,
+        text = "Student Records",
+        font = ("Arial", 11, "bold"),
+        bg = white,
+        fg = navy
+    )
+    results_heading.pack(anchor = "w", padx = 27, pady = (5, 0))
+
+    results_frame = Frame(content_frame, bg = white)
+    results_frame.pack(fill = BOTH, expand = True)
+
+    # Sort the records using the selected category and order.
+    def apply_sort():
+
+        students = load_students()
+        category = sort_by.get()
+
+        if category == "Name":
+            students.sort(key = lambda student: student["name"].lower())
+
+        elif category == "Student Number":
+            students.sort(key = lambda student: student["studentNumber"])
+
+        elif category == "Coursework Total":
+            students.sort(key = lambda student: calculate_results(student)[0])
+
+        elif category == "Exam Mark":
+            students.sort(key = lambda student: student["examMark"])
+
+        elif category == "Overall Percentage":
+            students.sort(key = lambda student: calculate_results(student)[2])
+
+        elif category == "Grade":
+            students.sort(key = lambda student: calculate_results(student)[3])
+
+        if sort_order.get() == "Descending":
+            students.reverse()
+
+        results_heading.config(
+            text = f"Sorted by {category} ({sort_order.get()})"
+        )
+
+        for widget in results_frame.winfo_children():
+            widget.destroy()
+
+        display_table(students, parent = results_frame)
+
+    Button(
+        options,
+        text = "Apply Sort",
+        font = button_font,
+        bg = navy,
+        fg = white,
+        relief = "flat",
+        command = apply_sort,
+        padx = 15
+    ).grid(row = 0, column = 4, padx = 15, pady = 15)
+
+    display_table(load_students(), parent = results_frame)
+
+
+# ---- 6. ADD A STUDENT RECORD ---- #
+
+def show_add_student():
+
+    clear_content()
+
+    page_heading("Add Student Record", "Enter the student's information below.")
+
+    form = Frame(content_frame, bg = light_blue)
+    form.pack(fill = X, padx = 35, pady = 15)
+
+    fields = [
+        "Student Name",
+        "Student Number",
+        "Coursework 1",
+        "Coursework 2",
+        "Coursework 3",
+        "Exam Mark"
+    ]
+
+    entries = []
+
+    # Create an input field for each student detail.
+    for row, field in enumerate(fields):
+
+        Label(
+            form,
+            text = field + ":",
+            font = button_font,
+            bg = light_blue,
+            fg = navy
+        ).grid(row = row, column = 0, sticky = "w", padx = 20, pady = 9)
+
+        entry = Entry(form, font = normal_font, width = 30)
+        entry.grid(row = row, column = 1, sticky = "w", padx = 20, pady = 9)
+
+        entries.append(entry)
+
+    # Validate and save the new student record.
+    def add_student():
+
+        name = entries[0].get().strip()
+        number = entries[1].get().strip()
+        cw1 = entries[2].get().strip()
+        cw2 = entries[3].get().strip()
+        cw3 = entries[4].get().strip()
+        exam = entries[5].get().strip()
+
+        if not validate_student(name, number, cw1, cw2, cw3, exam):
+            return
+
+        students = load_students()
+
+        for student in students:
+            if student["studentNumber"] == int(number):
+                messagebox.showerror("Duplicate Student", "That student number already exists.")
+                return
+
+        students.append(student_data(name, number, cw1, cw2, cw3, exam))
+        save_students(students)
+
+        messagebox.showinfo("Success", "Student record added successfully.")
+        show_add_student()
+
+    Button(
+        content_frame,
+        text = "Add Student",
+        font = button_font,
+        bg = navy,
+        fg = white,
+        relief = "flat",
+        command = add_student,
+        padx = 25,
+        pady = 8
+    ).pack(pady = 12)
+
+
+# ---- FIND A STUDENT BY NAME OR NUMBER ---- #
+
+# Return students matching the entered name and/or number.
+def find_matching_student(name, number):
+
+    students = load_students()
+    matches = []
+
+    for student in students:
+
+        name_matches = name == "" or student["name"].lower() == name.lower()
+        number_matches = number == "" or student["studentNumber"] == int(number)
+
+        if name_matches and number_matches:
+            matches.append(student)
+
+    return matches
+
+
+# ---- 7. DELETE A STUDENT RECORD ---- #
+
+def show_delete_student():
+
+    clear_content()
+
+    page_heading(
+        "Delete Student Record",
+        "Find a student using their name or student number."
+    )
+
+    form = Frame(content_frame, bg = light_blue)
+    form.pack(fill = X, padx = 30, pady = 20)
+
+    Label(
+        form,
+        text = "Student Name:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).grid(row = 0, column = 0, sticky = "w", padx = 15, pady = 15)
+
+    name_entry = Entry(form, font = normal_font, width = 22)
+    name_entry.grid(row = 0, column = 1, padx = 10, pady = 15)
+
+    Label(
+        form,
+        text = "Student Number:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).grid(row = 1, column = 0, sticky = "w", padx = 15, pady = 15)
+
+    number_entry = Entry(form, font = normal_font, width = 22)
+    number_entry.grid(row = 1, column = 1, padx = 10, pady = 15)
+
+    # Find the record and ask for confirmation before deleting it.
+    def delete_student():
+
+        name = name_entry.get().strip()
+        number = number_entry.get().strip()
+
+        if name == "" and number == "":
+            messagebox.showerror("Missing Information", "Enter a name or student number.")
+            return
+
+        if number != "" and not number.isdigit():
+            messagebox.showerror("Invalid Input", "Student number must contain digits only.")
+            return
+
+        matches = find_matching_student(name, number)
+
+        if len(matches) == 0:
+            messagebox.showerror("Not Found", "No matching student was found.")
+            return
+
+        if len(matches) > 1:
+            messagebox.showerror("Multiple Matches", "Enter the student number to identify the correct student.")
+            return
+
+        students = load_students()
+        student = matches[0]
+
+        if len(students) == 1:
+            messagebox.showerror("Cannot Delete", "At least one student record must remain.")
+            return
+
+        confirm = messagebox.askyesno(
+            "Confirm Deletion",
+            f"Delete {student['name']} ({student['studentNumber']})?"
+        )
+
+        if confirm:
+            students.remove(student)
+            save_students(students)
+
+            messagebox.showinfo("Success", "Student record deleted successfully.")
+            show_delete_student()
+
+    Button(
+        form,
+        text = "Delete Student",
+        font = button_font,
+        bg = navy,
+        fg = white,
+        relief = "flat",
+        command = delete_student,
+        padx = 15
+    ).grid(row = 2, column = 1, pady = 15)
+
+
+# ---- 8. UPDATE A STUDENT RECORD ---- #
+
+def show_update_student():
+
+    clear_content()
+
+    page_heading(
+        "Update Student Record",
+        "Search for a student, then edit their information."
+    )
+
+    search_form = Frame(content_frame, bg = light_blue)
+    search_form.pack(fill = X, padx = 30, pady = 15)
+
+    Label(
+        search_form,
+        text = "Student Name:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).grid(row = 0, column = 0, sticky = "w", padx = 15, pady = 12)
+
+    name_entry = Entry(search_form, font = normal_font, width = 22)
+    name_entry.grid(row = 0, column = 1, padx = 10, pady = 12)
+
+    Label(
+        search_form,
+        text = "Student Number:",
+        font = button_font,
+        bg = light_blue,
+        fg = navy
+    ).grid(row = 1, column = 0, sticky = "w", padx = 15, pady = 12)
+
+    number_entry = Entry(search_form, font = normal_font, width = 22)
+    number_entry.grid(row = 1, column = 1, padx = 10, pady = 12)
+
+    # Find the student whose details need to be changed.
+    def find_student():
+
+        name = name_entry.get().strip()
+        number = number_entry.get().strip()
+
+        if name == "" and number == "":
+            messagebox.showerror("Missing Information", "Enter a name or student number.")
+            return
+
+        if number != "" and not number.isdigit():
+            messagebox.showerror("Invalid Input", "Student number must contain digits only.")
+            return
+
+        matches = find_matching_student(name, number)
+
+        if len(matches) == 0:
+            messagebox.showerror("Not Found", "No matching student was found.")
+            return
+
+        if len(matches) > 1:
+            messagebox.showerror("Multiple Matches", "Enter the student number to identify the correct student.")
+            return
+
+        student = matches[0]
+        show_edit_form(student)
+
+    Button(
+        search_form,
+        text = "Find Student",
+        font = button_font,
+        bg = navy,
+        fg = white,
+        relief = "flat",
+        command = find_student,
+        padx = 15
+    ).grid(row = 2, column = 1, pady = 12)
+
+
+# Display the selected student's details in editable fields.
+def show_edit_form(student):
+
+    clear_content()
+
+    page_heading(
+        "Edit Student Details",
+        f"Editing the record for {student['name']}."
+    )
+
+    form = Frame(content_frame, bg = light_blue)
+    form.pack(fill = X, padx = 35, pady = 15)
+
+    fields = [
+        ("Student Name", student["name"]),
+        ("Student Number", str(student["studentNumber"])),
+        ("Coursework 1", str(student["coursework1"])),
+        ("Coursework 2", str(student["coursework2"])),
+        ("Coursework 3", str(student["coursework3"])),
+        ("Exam Mark", str(student["examMark"]))
+    ]
+
+    entries = []
+
+    # Fill each field with the student's existing information.
+    for row, field in enumerate(fields):
+
+        Label(
+            form,
+            text = field[0] + ":",
+            font = button_font,
+            bg = light_blue,
+            fg = navy
+        ).grid(row = row, column = 0, sticky = "w", padx = 20, pady = 8)
+
+        entry = Entry(form, font = normal_font, width = 30)
+        entry.insert(0, field[1])
+        entry.grid(row = row, column = 1, sticky = "w", padx = 20, pady = 8)
+
+        entries.append(entry)
+
+    original_number = student["studentNumber"]
+
+    # Validate and save the updated student details.
+    def update_student():
+
+        name = entries[0].get().strip()
+        number = entries[1].get().strip()
+        cw1 = entries[2].get().strip()
+        cw2 = entries[3].get().strip()
+        cw3 = entries[4].get().strip()
+        exam = entries[5].get().strip()
+
+        if not validate_student(name, number, cw1, cw2, cw3, exam):
+            return
+
+        students = load_students()
+
+        # Prevent the updated number from matching another student.
+        for current_student in students:
+            if current_student["studentNumber"] == int(number) and int(number) != original_number:
+                messagebox.showerror("Duplicate Student", "That student number already exists.")
+                return
+
+        updated_student = student_data(name, number, cw1, cw2, cw3, exam)
+
+        for index, current_student in enumerate(students):
+            if current_student["studentNumber"] == original_number:
+                students[index] = updated_student
+                break
+
+        save_students(students)
+
+        messagebox.showinfo("Success", "Student record updated successfully.")
+        show_update_student()
+
+    Button(
+        content_frame,
+        text = "Save Changes",
+        font = button_font,
+        bg = navy,
+        fg = white,
+        relief = "flat",
+        command = update_student,
+        padx = 25,
+        pady = 8
+    ).pack(pady = 12)
+
+
+# ---- SIDEBAR MENU ---- #
+
+# Dashboard navigation button.
+sidebar_button("⌂   Dashboard", show_dashboard, spacing = (25, 3))
+
+
+# ---- MAIN MENU DROPDOWN ---- #
+
+main_menu_heading = Button(
+    sidebar,
+    text = "MAIN MENU   +",
+    font = ("Arial", 10, "bold"),
+    bg = "#405477",
+    fg = white,
+    activebackground = "#52688D",
+    activeforeground = white,
+    relief = "flat",
     anchor = "w",
-    padx = 15,
-    pady = 15
-)
-result_label.place(x = 100, y = 215, width = 450, height = 180)
-
-# Create the search button.
-search_button = Button(
-    individual_frame,
-    text = "Find Student",
-    font = ("Times New Roman", 12, "bold"),
-    command = search_student
-)
-search_button.place(x = 100, y = 170, width = 150, height = 35)
-
-# Create the back button.
-back_button = Button(
-    individual_frame,
-    text = "Back to Menu",
-    font = ("Times New Roman", 12, "bold"),
-    command = back_to_individual_menu
-)
-back_button.place(x = 250, y = 430, width = 150, height = 35)
-
-
-# ---- HIGHEST OVERALL MARK PAGE ---- #
-
-highest_frame = Frame(
-    main,
-    bg = "#FFF1DB",
-    width = 650,
-    height = 500
-)
-
-# Display the page heading.
-heading = Label(
-    highest_frame,
-    text = "HIGHEST OVERALL MARK",
-    font = ("Times New Roman", 22, "bold"),
-    bg = "#23314F",
-    fg = "#FFFFFF"
-)
-heading.place(x = 25, y = 20, width = 600, height = 60)
-
-# Retrieve the highest-scoring student.
-highest_student = show_highest_student()
-
-coursework_total, percentage, grade = calculate_results(highest_student)
-
-# Store the student's information for display.
-details = [
-    ["Name", highest_student["name"]],
-    ["Number", highest_student["studentNumber"]],
-    ["Coursework", f"{coursework_total} / 60"],
-    ["Exam", f"{highest_student['examMark']} / 100"],
-    ["Percentage", f"{percentage:.2f}%"],
-    ["Grade", grade]
-]
-
-
-# ---- AWARD BADGE ---- #
-
-# Load and resize the award badge image.
-badge_image = Image.open(rankimage_path)
-badge_image = badge_image.resize((60, 60))
-
-badge_photo = ImageTk.PhotoImage(badge_image)
-
-# Display the award badge.
-badge_label = Label(
-    highest_frame,
-    image = badge_photo,
-    bg = "#FFF1DB"
-)
-badge_label.image = badge_photo
-badge_label.place(x = 290, y = 360)
-
-
-# ---- RESULTS DISPLAY ---- #
-
-result_frame_highest = Frame(
-    highest_frame,
-    bg = "#FFF1DB"
-)
-result_frame_highest.place(x = 100, y = 100, width = 450, height = 250)
-
-# Set the two result columns.
-result_frame_highest.grid_columnconfigure(0, weight = 1)
-result_frame_highest.grid_columnconfigure(1, weight = 2)
-
-# Store the value labels so they can be refreshed.
-highest_value_labels = []
-
-# Display each piece of student information.
-for row, detail in enumerate(details):
-
-    # Display the information heading.
-    heading_label = Label(
-        result_frame_highest,
-        text = detail[0] + ":",
-        font = ("Times New Roman", 11, "bold"),
-        bg = "#23314F",
-        fg = "#FFFFFF",
-        width = 10,
-        anchor = "w",
-        padx = 5
+    padx = 18,
+    command = lambda: toggle_menu(
+        main_menu_frame,
+        main_menu_heading,
+        "MAIN MENU",
+        extensions_heading
     )
-
-    heading_label.grid(
-        row = row,
-        column = 0,
-        sticky = "nsew",
-        padx = 10,
-        pady = 5,
-        ipady = 4
-    )
-
-
-    # Display the corresponding value.
-    value_label = Label(
-        result_frame_highest,
-        text = detail[1],
-        font = ("Times New Roman", 11),
-        bg = "#FFFFFF",
-        fg = "#23314F",
-        relief = "solid",
-        bd = 1
-    )
-
-    value_label.grid(
-        row = row,
-        column = 1,
-        sticky = "nsew",
-        padx = 5,
-        pady = 5
-    )
-
-    highest_value_labels.append(value_label)
-
-# Create the back button.
-back_button = Button(
-    highest_frame,
-    text = "Back to Menu",
-    font = ("Times New Roman", 12, "bold"),
-    command = highest_frame.place_forget
 )
-back_button.place(x = 250, y = 430, width = 150, height = 35)
+main_menu_heading.pack(fill = X, padx = 8, pady = (18, 3), ipady = 9)
+
+main_menu_frame = Frame(sidebar, bg = navy)
+
+sidebar_button("1   All Student Records", show_all_records, main_menu_frame)
+sidebar_button("2   Individual Record", show_individual, main_menu_frame)
+sidebar_button("3   Highest Mark", show_highest, main_menu_frame)
+sidebar_button("4   Lowest Mark", show_lowest, main_menu_frame)
 
 
-# ---- LOWEST OVERALL MARK PAGE ---- #
+# ---- EXTENSIONS DROPDOWN ---- #
 
-lowest_frame = Frame(
-    main,
-    bg = "#FFF1DB",
-    width = 650,
-    height = 500
-)
-
-# Display the page heading.
-heading = Label(
-    lowest_frame,
-    text = "LOWEST OVERALL MARK",
-    font = ("Times New Roman", 22, "bold"),
-    bg = "#23314F",
-    fg = "#FFFFFF"
-)
-heading.place(x = 25, y = 20, width = 600, height = 60)
-
-# Retrieve the lowest-scoring student.
-lowest_student = show_lowest_student()
-
-coursework_total, percentage, grade = calculate_results(lowest_student)
-
-# Store the student's information for display.
-details = [
-    ["Name", lowest_student["name"]],
-    ["Number", lowest_student["studentNumber"]],
-    ["Coursework", f"{coursework_total} / 60"],
-    ["Exam", f"{lowest_student['examMark']} / 100"],
-    ["Percentage", f"{percentage:.2f}%"],
-    ["Grade", grade]
-]
-
-
-# ---- RESULTS DISPLAY ---- #
-
-result_frame_lowest = Frame(
-    lowest_frame,
-    bg = "#FFF1DB"
-)
-result_frame_lowest.place(x = 100, y = 130, width = 450, height = 250)
-
-# Set the two result columns.
-result_frame_lowest.grid_columnconfigure(0, weight = 1)
-result_frame_lowest.grid_columnconfigure(1, weight = 2)
-
-# Store the value labels so they can be refreshed.
-lowest_value_labels = []
-
-# Display each piece of student information.
-for row, detail in enumerate(details):
-
-    # Display the information heading.
-    heading_label = Label(
-        result_frame_lowest,
-        text = detail[0] + ":",
-        font = ("Times New Roman", 11, "bold"),
-        bg = "#23314F",
-        fg = "#FFFFFF",
-        width = 10,
-        anchor = "w",
-        padx = 5
+extensions_heading = Button(
+    sidebar,
+    text = "EXTENSIONS   +",
+    font = ("Arial", 10, "bold"),
+    bg = "#405477",
+    fg = white,
+    activebackground = "#52688D",
+    activeforeground = white,
+    relief = "flat",
+    anchor = "w",
+    padx = 18,
+    command = lambda: toggle_menu(
+        extensions_frame,
+        extensions_heading,
+        "EXTENSIONS"
     )
-
-    heading_label.grid(
-        row = row,
-        column = 0,
-        sticky = "nsew",
-        padx = 10,
-        pady = 5,
-        ipady = 4
-    )
-
-    # Display the corresponding value.
-    value_label = Label(
-        result_frame_lowest,
-        text = detail[1],
-        font = ("Times New Roman", 11),
-        bg = "#FFFFFF",
-        fg = "#23314F",
-        relief = "solid",
-        bd = 1
-    )
-
-    value_label.grid(
-        row = row,
-        column = 1,
-        sticky = "nsew",
-        padx = 5,
-        pady = 5
-    )
-
-    lowest_value_labels.append(value_label)
-
-# Create the back button.
-back_button = Button(
-    lowest_frame,
-    text = "Back to Menu",
-    font = ("Times New Roman", 12, "bold"),
-    command = lowest_frame.place_forget
 )
-back_button.place(x = 250, y = 430, width = 150, height = 35)
+extensions_heading.pack(fill = X, padx = 8, pady = (12, 3), ipady = 9)
+
+extensions_frame = Frame(sidebar, bg = navy)
+
+sidebar_button("5   Sort Records", show_sort, extensions_frame)
+sidebar_button("6   Add Student", show_add_student, extensions_frame)
+sidebar_button("7   Delete Student", show_delete_student, extensions_frame)
+sidebar_button("8   Update Student", show_update_student, extensions_frame)
 
 
-# ---- ADD STUDENT RECORD PAGE ---- #
+# Keep both dropdown menus collapsed when the app opens.
+main_menu_frame.pack_forget()
+extensions_frame.pack_forget()
 
-add_frame = Frame(
-    main,
-    bg = "#FFF1DB",
-    width = 650,
-    height = 500
+
+# Sidebar footer.
+Label(
+    sidebar,
+    text = "STUDENT MANAGER",
+    font = ("Arial", 8, "bold"),
+    bg = navy,
+    fg = "#AEBBD0"
+).pack(side = BOTTOM, pady = 18)
+
+
+# ---- TABLE STYLE ---- #
+
+style = ttk.Style()
+style.theme_use("default")
+
+style.configure(
+    "Treeview",
+    background = white,
+    foreground = navy,
+    rowheight = 32,
+    fieldbackground = white,
+    font = ("Arial", 9)
 )
 
-# Display the page heading.
-heading = Label(
-    add_frame,
-    text = "ADD STUDENT RECORD",
-    font = ("Times New Roman", 22, "bold"),
-    bg = "#23314F",
-    fg = "#FFFFFF"
-)
-heading.place(x = 25, y = 20, width = 600, height = 60)
-
-
-# ---- STUDENT FORM ---- #
-
-form_frame = Frame(
-    add_frame,
-    bg = "#FFF1DB"
-)
-form_frame.place(x = 100, y = 120, width = 450, height = 280)
-
-# Set the two form columns.
-form_frame.grid_columnconfigure(0, weight = 1)
-form_frame.grid_columnconfigure(1, weight = 2)
-
-# Store the student information fields.
-fields = [
-    "Name",
-    "Number",
-    "Coursework 1",
-    "Coursework 2",
-    "Coursework 3",
-    "Exam Mark"
-]
-
-# Create the input fields.
-name_entry = Entry(form_frame)
-number_entry = Entry(form_frame)
-cw1_entry = Entry(form_frame)
-cw2_entry = Entry(form_frame)
-cw3_entry = Entry(form_frame)
-exam_entry = Entry(form_frame)
-
-# Store all entry widgets in a list.
-entries = [
-    name_entry,
-    number_entry,
-    cw1_entry,
-    cw2_entry,
-    cw3_entry,
-    exam_entry
-]
-
-# Create each field label and corresponding input box.
-for row, field in enumerate(fields):
-
-    # Display the field label.
-    field_label = Label(
-        form_frame,
-        text = field + ":",
-        font = ("Times New Roman", 11, "bold"),
-        bg = "#23314F",
-        fg = "#FFFFFF",
-        width = 10,
-        anchor = "w",
-        padx = 5
-    )
-
-    field_label.grid(
-        row = row,
-        column = 0,
-        sticky = "nsew",
-        padx = 10,
-        pady = 5,
-        ipady = 4
-    )
-
-    # Configure and position the input field.
-    entries[row].config(
-        font = ("Times New Roman", 11),
-        bg = "#FFFFFF",
-        fg = "#23314F",
-        relief = "solid",
-        bd = 1
-    )
-
-    entries[row].grid(
-        row = row,
-        column = 1,
-        sticky = "nsew",
-        padx = 5,
-        pady = 5
-    )
-
-
-# ---- FORM BUTTONS ---- #
-
-# Create the Add Student button.
-add_button = Button(
-    add_frame,
-    text = "Add Student",
-    font = ("Times New Roman", 12, "bold"),
-    command = add_student
-)
-add_button.place(x = 165, y = 430, width = 150, height = 35)
-
-# Create the back button.
-back_button = Button(
-    add_frame,
-    text = "Back to Menu",
-    font = ("Times New Roman", 12, "bold"),
-    command = add_frame.place_forget
-)
-back_button.place(x = 335, y = 430, width = 150, height = 35)
-
-# ---- UPDATE STUDENT RECORD PAGE ---- #
-
-update_student_frame = Frame(
-    main,
-    bg = "#FFF1DB",
-    width = 650,
-    height = 500
+style.configure(
+    "Treeview.Heading",
+    background = navy,
+    foreground = white,
+    font = ("Arial", 9, "bold"),
+    padding = 8
 )
 
-# Display the page heading.
-heading = Label(
-    update_student_frame,
-    text = "UPDATE STUDENT RECORD",
-    font = ("Times New Roman", 22, "bold"),
-    bg = "#23314F",
-    fg = "#FFFFFF"
+style.map(
+    "Treeview",
+    background = [("selected", "#D7E1F0")],
+    foreground = [("selected", navy)]
 )
-heading.place(x = 25, y = 20, width = 600, height = 60)
 
-
-# ---- STUDENT UPDATE FORM ---- #
-
-edit_form_frame = Frame(
-    update_student_frame,
-    bg = "#FFF1DB"
-)
-edit_form_frame.place(x = 100, y = 120, width = 450, height = 280)
-
-# Set the two form columns.
-edit_form_frame.grid_columnconfigure(0, weight = 1)
-edit_form_frame.grid_columnconfigure(1, weight = 2)
-
-# Store the student information fields.
-edit_fields = [
-    "Name",
-    "Number",
-    "Coursework 1",
-    "Coursework 2",
-    "Coursework 3",
-    "Exam Mark"
-]
-
-# Create the input fields.
-edit_name_entry = Entry(edit_form_frame)
-edit_number_entry = Entry(edit_form_frame)
-edit_cw1_entry = Entry(edit_form_frame)
-edit_cw2_entry = Entry(edit_form_frame)
-edit_cw3_entry = Entry(edit_form_frame)
-edit_exam_entry = Entry(edit_form_frame)
-
-# Store all update entry widgets in a list.
-edit_entries = [
-    edit_name_entry,
-    edit_number_entry,
-    edit_cw1_entry,
-    edit_cw2_entry,
-    edit_cw3_entry,
-    edit_exam_entry
-]
-
-# Create each field label and corresponding input box.
-for row, field in enumerate(edit_fields):
-
-    # Display the field label.
-    field_label = Label(
-        edit_form_frame,
-        text = field + ":",
-        font = ("Times New Roman", 11, "bold"),
-        bg = "#23314F",
-        fg = "#FFFFFF",
-        width = 10,
-        anchor = "w",
-        padx = 5
-    )
-
-    field_label.grid(
-        row = row,
-        column = 0,
-        sticky = "nsew",
-        padx = 10,
-        pady = 5,
-        ipady = 4
-    )
-
-    # Configure and position the input field.
-    edit_entries[row].config(
-        font = ("Times New Roman", 11),
-        bg = "#FFFFFF",
-        fg = "#23314F",
-        relief = "solid",
-        bd = 1
-    )
-
-    edit_entries[row].grid(
-        row = row,
-        column = 1,
-        sticky = "nsew",
-        padx = 5,
-        pady = 5
-    )
-
-
-# ---- UPDATE FORM BUTTONS ---- #
-
-# Create the Update Student button.
-update_button = Button(
-    update_student_frame,
-    text = "Update Student",
-    font = ("Times New Roman", 12, "bold"),
-    command = update_student
-)
-update_button.place(x = 165, y = 430, width = 150, height = 35)
-
-# Create the back button.
-back_button = Button(
-    update_student_frame,
-    text = "Back to Search",
-    font = ("Times New Roman", 12, "bold"),
-    command = back_to_update_search
-)
-back_button.place(x = 335, y = 430, width = 150, height = 35)
 
 # ---- RUN THE APPLICATION ---- #
+
+show_dashboard()
 main.mainloop()
